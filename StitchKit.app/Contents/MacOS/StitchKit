@@ -5,9 +5,21 @@ APP="$(cd "$(dirname "$0")/../Resources/app" && pwd)"
 SUPPORT="$HOME/Library/Application Support/StitchKit"
 VENV="$SUPPORT/venv"
 LOG="$SUPPORT/setup.log"
+PROGRESS="$SUPPORT/progress.js"
 URL="http://127.0.0.1:5077"
 mkdir -p "$SUPPORT"
 export PATH="$SUPPORT/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+
+progress() {   # step number, total, words, state (working | failed | ready)
+  printf 'window.SK={step:%s,of:%s,text:"%s",state:"%s",time:%s};\n' "$1" "$2" "$3" "$4" "$(date +%s)" > "$PROGRESS"
+  echo "--- $(date '+%H:%M:%S') step $1 of $2: $3 ($4)" >> "$LOG"
+}
+
+fail() {
+  progress "$1" 6 "$2" failed
+  osascript -e "display dialog \"StitchKit could not finish setting up: $2\n\nCheck your internet connection and open StitchKit again. If it happens again, send Claude the file setup.log from Library › Application Support › StitchKit.\" with title \"StitchKit\" buttons {\"OK\"} default button \"OK\" with icon caution" >/dev/null 2>&1
+  exit 1
+}
 
 # already open? just show it
 if curl -s --max-time 2 "$URL/api/version" >/dev/null 2>&1; then
@@ -15,45 +27,55 @@ if curl -s --max-time 2 "$URL/api/version" >/dev/null 2>&1; then
   exit 0
 fi
 
-SETUP_PAGE=0
 REQ="$(cat "$APP/requirements.txt" "$APP/requirements-nodeps.txt" | shasum | cut -d' ' -f1)"
 if [ ! -x "$VENV/bin/python" ] || [ "$(cat "$SUPPORT/parts.hash" 2>/dev/null)" != "$REQ" ]; then
-  # a page that waits for StitchKit and opens it when it's ready
-  rm -f "$SUPPORT/failed.svg"
-  SETUP_PAGE=1
+  # only one setup at a time (opening the app twice must not start a second one)
+  LOCK="$SUPPORT/setup.lock"
+  if ! mkdir "$LOCK" 2>/dev/null; then
+    if [ -n "$(find "$LOCK" -maxdepth 0 -mmin -40 2>/dev/null)" ]; then
+      [ -f "$SUPPORT/setting_up.html" ] && open "$SUPPORT/setting_up.html"
+      exit 0
+    fi
+    rm -rf "$LOCK"; mkdir "$LOCK"
+  fi
+  trap 'rm -rf "$LOCK"' EXIT
+  echo "=== StitchKit setup $(date) ===" >> "$LOG"
+  progress 1 6 "Starting" working
   cp "$APP/assets/setting_up.html" "$SUPPORT/setting_up.html"
   cp "$APP/assets/icon.svg" "$SUPPORT/icon.svg"
   open "$SUPPORT/setting_up.html"
-  {
-    echo "=== StitchKit setup $(date) ==="
-    if ! command -v uv >/dev/null 2>&1; then
-      echo "Getting uv (installs Python for StitchKit)..."
-      curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="$SUPPORT/bin" UV_NO_MODIFY_PATH=1 sh || exit 1
-    fi
-    rm -rf "$VENV"
-    uv venv --python 3.12 "$VENV" || exit 1
-    uv pip install --python "$VENV" -r "$APP/requirements.txt" || exit 1
-    uv pip install --python "$VENV" --no-deps -r "$APP/requirements-nodeps.txt" || exit 1
-    "$VENV/bin/python" "$APP/tests/selftest.py" || exit 1
-    echo "$REQ" > "$SUPPORT/parts.hash"
-    echo "=== done ==="
-  } >> "$LOG" 2>&1
-  if [ ! -f "$SUPPORT/parts.hash" ] || [ "$(cat "$SUPPORT/parts.hash")" != "$REQ" ]; then
-    cp "$APP/assets/failed.svg" "$SUPPORT/failed.svg"
-    osascript -e 'display dialog "StitchKit could not finish setting up. Check your internet connection and open StitchKit again.\n\nThe details are saved in Library › Application Support › StitchKit › setup.log (send that file to Claude if it keeps happening)." with title "StitchKit" buttons {"OK"} default button "OK" with icon caution' >/dev/null 2>&1
-    exit 1
+
+  if ! command -v uv >/dev/null 2>&1; then
+    progress 1 6 "Getting the installer (uv)" working
+    curl -LsSf https://astral.sh/uv/install.sh 2>>"$LOG" | env UV_INSTALL_DIR="$SUPPORT/bin" UV_NO_MODIFY_PATH=1 sh >>"$LOG" 2>&1 \
+      || fail 1 "the installer could not be downloaded"
+    command -v uv >/dev/null 2>&1 || fail 1 "the installer did not install"
   fi
+  progress 2 6 "Getting Python (about 30 MB)" working
+  rm -rf "$VENV"
+  uv venv --python 3.12 "$VENV" >>"$LOG" 2>&1 || fail 2 "Python could not be downloaded"
+  progress 3 6 "Getting the stitching parts (about 100 MB)" working
+  uv pip install --python "$VENV" -r "$APP/requirements.txt" >>"$LOG" 2>&1 || fail 3 "the stitching parts could not be installed"
+  progress 4 6 "Getting the stitch engine" working
+  uv pip install --python "$VENV" --no-deps -r "$APP/requirements-nodeps.txt" >>"$LOG" 2>&1 || fail 4 "the stitch engine could not be installed"
+  progress 5 6 "Checking that everything stitches (about a minute)" working
+  "$VENV/bin/python" "$APP/tests/selftest.py" >>"$LOG" 2>&1 || fail 5 "the check stitch did not work"
+  echo "$REQ" > "$SUPPORT/parts.hash"
+  echo "=== setup done ===" >> "$LOG"
+  progress 6 6 "Opening StitchKit" working
 fi
 
 cd "$APP" || exit 1
 nohup "$VENV/bin/python" "$APP/app.py" --auto-quit --no-browser > "$SUPPORT/stitchkit.log" 2>&1 &
-for i in $(seq 1 60); do
+# the very first start can be slow while macOS checks the new parts
+for i in $(seq 1 360); do
   sleep 0.5
   if curl -s --max-time 1 "$URL/api/version" >/dev/null 2>&1; then
-    # the setting-up page opens StitchKit by itself; otherwise open it here
-    if [ "$SETUP_PAGE" = "0" ]; then open "$URL"; fi
+    [ -f "$PROGRESS" ] && progress 6 6 "StitchKit is ready" ready
+    open "$URL"
     exit 0
   fi
 done
-osascript -e 'display dialog "StitchKit did not start. The details are in Library › Application Support › StitchKit › stitchkit.log." with title "StitchKit" buttons {"OK"} default button "OK" with icon caution' >/dev/null 2>&1
+progress 6 6 "StitchKit did not start" failed
+osascript -e 'display dialog "StitchKit did not start. Open it again; if it still does not start, send Claude the file stitchkit.log from Library › Application Support › StitchKit." with title "StitchKit" buttons {"OK"} default button "OK" with icon caution' >/dev/null 2>&1
 exit 1

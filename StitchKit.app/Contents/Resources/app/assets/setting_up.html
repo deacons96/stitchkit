@@ -1,15 +1,36 @@
 <!doctype html><html><head><meta charset="utf-8"><title>Setting up StitchKit</title>
-<style>body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#edf2f7;color:#1e2740;font:16px/1.5 "Avenir Next",Helvetica,sans-serif;text-align:center}
-.box{max-width:460px;padding:30px}h1{font:400 30px Didot,"Bodoni 72",Georgia,serif;margin:16px 0 8px}
+<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#edf2f7;color:#1e2740;font:16px/1.5 "Avenir Next",Helvetica,sans-serif;text-align:center}
+.box{max-width:480px;padding:30px}h1{font:400 30px Didot,"Bodoni 72",Georgia,serif;margin:16px 0 8px}
 .s{width:56px;height:56px;border:3px dashed #b3264f;border-radius:50%;margin:0 auto;animation:spin 3s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
-.err{color:#7e1736;display:none}</style></head><body><div class="box">
-<div class="s" id="sp"></div><h1>Setting up StitchKit</h1>
-<p id="msg">The first time takes about five minutes while StitchKit fetches its stitching parts. This page opens StitchKit by itself when it's ready.</p>
-<p class="err" id="err">Setup did not finish. Check the internet connection and open StitchKit again. The details are in Library › Application Support › StitchKit › setup.log.</p>
+.bar{height:6px;background:#d6dfea;border-radius:6px;overflow:hidden;margin:18px 0 8px}.bar i{display:block;height:100%;background:#b3264f;width:5%;transition:width .6s}
+.step{font-weight:600}.small{font-size:14px;color:#5b6480}.err{color:#7e1736}
+a.btn{display:inline-block;margin-top:14px;background:#b3264f;color:#fff;text-decoration:none;padding:10px 20px;border-radius:999px}</style></head><body><div class="box">
+<div class="s" id="sp"></div><h1 id="title">Setting up StitchKit</h1>
+<div class="bar"><i id="bar"></i></div>
+<div class="step" id="step">Starting…</div>
+<p class="small" id="msg">The first time takes about five minutes, longer on a slow connection, while StitchKit fetches its stitching parts. Keep this page open.</p>
 </div>
 <script>
-function tryOpen(){ const i = new Image(); i.onload = () => location.href = 'http://127.0.0.1:5077'; i.src = 'http://127.0.0.1:5077/static/icon.svg?t=' + Date.now(); }
-function failed(){ const f = new Image(); f.onload = () => { document.getElementById('err').style.display = 'block'; document.getElementById('msg').style.display = 'none'; document.getElementById('sp').style.animation = 'none'; };
-  f.src = 'failed.svg?t=' + Date.now(); }
-setInterval(() => { tryOpen(); failed(); }, 3000);
+let last = null, lastChange = Date.now();
+function show(){
+  const p = window.SK; if (!p) return;
+  const key = p.step + p.text + p.state;
+  if (key !== last) { last = key; lastChange = Date.now(); }
+  document.getElementById('bar').style.width = Math.max(5, 100 * (p.state === 'ready' ? 1 : (p.step - 0.5) / p.of)) + '%';
+  document.getElementById('step').textContent = p.state === 'failed' ? 'Stopped: ' + p.text : 'Step ' + p.step + ' of ' + p.of + ': ' + p.text;
+  const msg = document.getElementById('msg');
+  if (p.state === 'ready') {
+    document.getElementById('sp').style.animation = 'none';
+    document.getElementById('title').textContent = 'StitchKit is ready';
+    msg.innerHTML = 'It has opened in another tab. You can close this one.<br><a class="btn" href="http://127.0.0.1:5077">Open StitchKit</a>';
+  } else if (p.state === 'failed') {
+    document.getElementById('sp').style.animation = 'none';
+    msg.innerHTML = '<span class="err">Setup did not finish.</span> Check the internet connection and open StitchKit again. If it happens again, send Claude the file setup.log from Library › Application Support › StitchKit.';
+  } else if (Date.now() - lastChange > 6 * 60 * 1000) {
+    msg.textContent = 'This step is taking a while. That is normal on a slow connection; leave it running. If nothing changes for 20 minutes, quit StitchKit and open it again.';
+  }
+}
+function poll(){ const s = document.createElement('script'); s.src = 'progress.js?t=' + Date.now();
+  s.onload = s.onerror = () => { s.remove(); show(); }; document.body.appendChild(s); }
+poll(); setInterval(poll, 2000);
 </script></body></html>

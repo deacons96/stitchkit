@@ -1,3 +1,6 @@
+StitchKit 1.3.1 beta
+- Setup fix: the "Setting up StitchKit" page now shows each step and StitchKit opens by itself when it is ready. If setup stops, it says so instead of waiting forever.
+
 StitchKit 1.3 beta
 - A real Mac app. Drag StitchKit into Applications and double-click it: no Terminal. The first time it sets itself up (about five minutes, needs the internet), then it opens in your browser. It quits by itself a while after you close the StitchKit tab, or use Settings > Quit.
 - One screen. Choose what you're making first (Design, Patch, Frame or Bag tag), then what goes on it. Options sit on the right in sections that fold away.
