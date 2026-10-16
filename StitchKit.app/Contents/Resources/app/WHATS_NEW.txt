@@ -1,0 +1,16 @@
+StitchKit 1.3 beta
+- A real Mac app. Drag StitchKit into Applications and double-click it: no Terminal. The first time it sets itself up (about five minutes, needs the internet), then it opens in your browser. It quits by itself a while after you close the StitchKit tab, or use Settings > Quit.
+- One screen. Choose what you're making first (Design, Patch, Frame or Bag tag), then what goes on it. Options sit on the right in sections that fold away.
+- Live preview: the real stitches update a moment after each change, shown on a grid inside your hoop. Zoom, turn the grid or hoop off, and set the fabric colour to see it on your sweatshirt.
+- Bag tags: 17 tag shapes, a dense satin edge and a satin keyring hole (3/16, 1/4 or 5/16 in punch), foam or Peltex I 71F in the middle. StitchKit stops at each layer and shows "How to make it", step by step, on screen and on the thread sheet.
+- Your own frame and tag files. Put VP3s (or PES, DST...) in Documents > StitchKit > Frames or Bag Tags. Sizes in the name are grouped (TAG-23_3.5_INCH, TAG-23_4.0_INCH...). Frames saved as left and right files go either side of your design.
+  Reminder, as agreed: your design is sewn after the frame's tackdown and before its final satin. You can change that for each frame ("Your design sews").
+- Your monogram letter sets. StitchKit reads Documents > StitchKit > Monogram Fonts and any folder you add in Settings (like your Monograms > vp3 folder). Folder names give the font and size: WesternShadow1 = 1 in, WesternShadow1H = 1.5 in, WesternShadow2H = 2.5 in. Pick a font by its letter M; "Biggest that fits" chooses the size for you.
+- Font pictures: every font shows a sample when you choose it.
+- Change shapes: click any shape in your artwork to change its thread, stitch type or direction, sew just its outline, leave it out, join it to another shape, or turn it into appliqué with a satin or blanket edge (it goes in the Cricut file).
+- Arrange: add stitch files, words, monograms and artwork, then line them up like in Canva (edges, centres, centre in the hoop, space evenly) with snapping guides. Works inside patches, frames and tags.
+- New bamboo frames drawn from your pictures: double mitred octagon, octagon with spokes, square with corner caps, square with crossed corners, square with spokes, ring, double ring and the flared oval. Each cane gets node bands and its fill runs along the cane.
+- Smoother scalloped square and cloud frames (plain inner line), tidier Greek key.
+- Peltex I 71F added to the supplies notes.
+- Much faster: StitchKit stitches about five times quicker than 1.2.
+- Fixed: travel stitches across open spaces between satin lines; stitch files whose first stitch jumps from the hoop centre.

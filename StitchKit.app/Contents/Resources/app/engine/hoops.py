@@ -111,7 +111,7 @@ def layout_copies(res: Result, n, margin, spacing=COPY_SPACING, user_stops=(), h
         fabric += cp.fabric
     from shapely.ops import unary_union
     outline = unary_union([cp.outline for cp in copies if cp.outline is not None]) if piece.outline is not None else None
-    out = Result(steps, fabric, list(res.notes), res.kind, outline)
+    out = Result(steps, fabric, list(res.notes), res.kind, outline, list(getattr(res, 'guide', [])))
     if len(copies) > 1:
         notes.append('%d copies laid out %d x %d, %g mm apart, sewn colour by colour.' % (len(copies), use_cols, use_rows, spacing))
     return out, hp, len(copies), notes

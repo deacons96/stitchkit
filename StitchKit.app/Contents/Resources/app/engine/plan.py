@@ -61,6 +61,17 @@ class Options:
     knockdown_colour: str = ''          # '' = the first design colour
     edge_style: str = 'satin'           # appliqué edges: 'satin' | 'blanket'
     fill_style: str = 'tatami'          # 'tatami' | 'contour' | 'meander'
+    # 1.3
+    tag: bool = False                   # a bag tag (see tags.py)
+    tag_shape: str = 'classic'
+    tag_hole: str = 'medium'            # small | medium | large punch
+    tag_material: str = 'foam'          # foam | peltex
+    tag_sideways: bool = False
+    file_frame: str = ''                # one of your own frame/tag stitch files (library.py key)
+    file_frame_size: str = ''           # which size of it
+    design_order: str = 'auto'          # your frame files: 'auto' | 'first' | 'last'
+    part_gap_mm: float = 0.0            # split frames (left and right files): space between the parts, 0 = auto
+    shape_edits: dict = field(default_factory=dict)   # click-a-shape changes to the artwork
 
     def pull(self):
         if self.pull_mm >= 0:
@@ -117,9 +128,14 @@ def lightness(c):
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
 
 
+def _origin(art):
+    if getattr(art, 'origin', None) is not None:
+        return art.origin
+    return min(g.bounds[0] for _, g in art.layers), min(g.bounds[1] for _, g in art.layers)
+
+
 def scaled_layers(art: Artwork, s):
-    minx = min(g.bounds[0] for _, g in art.layers)
-    miny = min(g.bounds[1] for _, g in art.layers)
+    minx, miny = _origin(art)
     out = []
     for c, g in art.layers:
         g2 = affinity.translate(g, -minx, -miny)
@@ -218,7 +234,78 @@ def detect_border(layers):
     return best
 
 
-def plan_design(art: Artwork, opts: Options):
+def plan_design(art: Artwork, opts: Options, extra=None):
+    specials = []
+    if opts.shape_edits:
+        from . import shapeedit
+        art, specials = shapeedit.apply(art, opts.shape_edits)
+    objs, notes = _plan_design(art, opts)
+    if specials:
+        objs, notes2, fabric = _specials(art, opts, objs, specials)
+        notes += notes2
+        if extra is not None:
+            extra['fabric'] = fabric
+    return objs, notes
+
+
+def _specials(art, opts, objs, specials):
+    """Your click-a-shape changes: fill direction/style, outline-only shapes, appliqué pieces."""
+    from .satin import run_along
+    from .satin2 import satin_objs
+    s = opts.size_in * MM_PER_IN / max(art.width, art.height)
+    minx, miny = _origin(art)
+    T = lambda g: clean(affinity.scale(affinity.translate(g, -minx, -miny), s, s, origin=(0, 0)))
+    fills = [o for o in objs if o.kind == 'fill']
+    rest = [o for o in objs if o.kind != 'fill']
+    outlines, appli_pre, appli_edge, fabric, notes = [], [], [], [], []
+    all_cols = [c for c, _ in art.layers] + [sp['colour'] for sp in specials]
+    darkest = min(all_cols, key=lightness) if all_cols else '#000000'
+    n_app = 0
+    for sp in specials:
+        g = T(sp['geom'])
+        if g.is_empty:
+            continue
+        if sp['kind'] == 'params':
+            for o in fills:
+                if o.poly is not None and g.buffer(0.3).contains(o.poly.representative_point()):
+                    style = sp.get('style')
+                    ang = sp.get('angle')
+                    o2 = Options(**{**opts.__dict__, 'fill_style': style or opts.fill_style})
+                    a = float(ang) if ang not in (None, '') else float(o.params.get('angle', 45))
+                    o.params = fill_params(o.colour, o2, o.poly.area, round(a, 1))
+        elif sp['kind'] == 'outline':
+            outlines.append(Obj('run', sp['colour'], lines=run_along(g), params={'running_stitch_length_mm': '2.0',
+                                                                                  'repeats': '3'},
+                                label='Outline (triple stitch)'))
+        elif sp['kind'] == 'applique':
+            n_app += 1
+            ec = sp.get('edge_colour') or darkest
+            blanket = sp.get('edge') == 'blanket'
+            w = 1.6 if opts.size_in < 3 else 2.0
+            appli_pre.append(Obj('run', ec, lines=run_along(g), params={'running_stitch_length_mm': '2.5'},
+                                 label='Placement line', name='Placement - lay fabric', stop_after=True))
+            appli_pre.append(Obj('run', ec, lines=run_along(g.buffer(-0.5, join_style=1)),
+                                 params={'running_stitch_length_mm': '2.0'}, label='Tackdown', name='Tackdown - then trim',
+                                 stop_after=True))
+            appli_edge += satin_objs(g, w if not blanket else 2.0, ec, 'Appliqué edge', outer_offset=0.4 if not blanket else 0.3,
+                                     holes=True, spacing=0.36, pull_mm=opts.pull(),
+                                     method='e_stitch' if blanket else 'satin_column')
+            fabric.append((g, sp['colour']))
+    if n_app:
+        notes.append('%d appliqué piece%s: the machine stops after each placement line (lay the fabric) and tackdown '
+                     '(trim), then the %s edges are sewn after the fills. The pieces are in the Cricut file.'
+                     % (n_app, '' if n_app == 1 else 's', 'blanket-stitch' if any(sp.get('edge') == 'blanket' for sp in specials) else 'satin'))
+    # placements first (one stop to lay every piece), then every tackdown
+    pl = [o for o in appli_pre if o.label == 'Placement line']
+    tk = [o for o in appli_pre if o.label == 'Tackdown']
+    for group in (pl, tk):
+        for o in group[:-1]:
+            o.stop_after = False
+    appli_pre = pl + tk
+    return appli_pre + fills + outlines + appli_edge + rest, notes, fabric
+
+
+def _plan_design(art: Artwork, opts: Options):
     w, h = art.width, art.height
     s = opts.size_in * MM_PER_IN / max(w, h)
     layers = scaled_layers(art, s)

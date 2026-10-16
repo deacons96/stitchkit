@@ -58,5 +58,16 @@ class _Finder(importlib.abc.MetaPathFinder, importlib.abc.Loader):
 if __name__ == '__main__':
     sys.meta_path.insert(0, _Finder())
     sys.path.insert(0, ENGINE)
+    # Ink/Stitch reads all 150 thread palettes (twice) on every run to name the threads, which
+    # StitchKit does itself: skipping it saves 10+ seconds per run. Its colour library also logs
+    # every conversion; keep that quiet.
+    import logging
+    logging.getLogger('colormath2').disabled = True
+    logging.getLogger('colormath').disabled = True
+    try:
+        from lib.threads import catalog as _catalog
+        _catalog._ThreadCatalog.load_palettes = lambda self, paths: None
+    except Exception:
+        pass
     sys.argv[0] = os.path.join(ENGINE, 'inkstitch.py')
     runpy.run_path(sys.argv[0], run_name='__main__')

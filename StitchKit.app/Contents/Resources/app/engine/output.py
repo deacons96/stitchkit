@@ -5,6 +5,7 @@ template to print at 100%, a Cricut cut file when there is appliqué fabric, and
 your stops can be changed later without stitching everything again.
 """
 import datetime
+from dataclasses import replace
 import html
 import math
 import pickle
@@ -40,9 +41,8 @@ def finish(single: Result, out_dir, base, formats=('vp3',), copies=1, basting=Fa
     else:
         res = single.centred()
         steps = [s for s in res.steps]
-        steps = [type(s)(s.label, s.colour, s.stitches, s.name, s.stop_after or i in stops, i in stops)
-                 for i, s in enumerate(steps)]
-        res = Result(steps, res.fabric, res.notes, res.kind, res.outline)
+        steps = [replace(s, stop_after=s.stop_after or i in stops, user_stop=i in stops) for i, s in enumerate(steps)]
+        res = Result(steps, res.fabric, res.notes, res.kind, res.outline, list(getattr(res, 'guide', [])))
         w, h = res.size_mm()
         hoop, how = hoops.pick(w, h, margin)
         placed = 1

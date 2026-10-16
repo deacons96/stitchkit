@@ -34,6 +34,9 @@ class Layout:
     pieces: list = field(default_factory=list)
     nodes: list = field(default_factory=list)
     widths: dict = field(default_factory=dict)
+    cells: list = field(default_factory=list)       # bamboo frames (see bamboo.py)
+    bars: list = field(default_factory=list)
+    panels: list = field(default_factory=list)
 
     def longest(self):
         b = self.outer.bounds
@@ -49,7 +52,7 @@ def widths(opts: Options, longest_mm, kind):
     w = dict(border=opts.border_mm or (3.0 if L < 64 else (3.5 if L < 115 else 4.5)),
              band=opts.frame_band_mm or max(5.0, min(14.0, L * 0.085)),
              inner=opts.frame_inner_mm or (1.6 if L < 64 else 2.0))
-    if kind == 'pieces':
+    if kind in ('pieces', 'bamboo'):
         w['outline'] = opts.frame_inner_mm or (1.2 if L < 80 else (1.5 if L < 150 else 1.8))
     return w
 
@@ -70,7 +73,7 @@ def frame_kind(opts):
     if not opts.frame:
         return 'patch'
     t = template(opts.frame_key)
-    return 'ring' if t is None or t.kind == 'ring' else 'pieces'
+    return 'ring' if t is None or t.kind == 'ring' else t.kind
 
 
 def _map(tpl_outer, fitted, g):
@@ -114,6 +117,13 @@ def _layout_once(cov, opts, extra, L):
     # pieces: scale the whole template until its design area holds the content
     k = _fit_scale_inside(tpl.inner, cov.buffer(gap + extra, join_style=1))
     S = _place(tpl.outer, k, cov)
+    if kind == 'bamboo':
+        if not opts.frame_inner_mm:
+            w['outline'] = 1.0 if L < 80 else (1.2 if L < 150 else 1.4)
+        pl = lambda g: clean(_place(g, k, cov))
+        return Layout('bamboo', clean(S), pl(tpl.inner), [pl(p) for p in tpl.parts], [], w,
+                      [pl(c) for c in tpl.cells], [(_place(b, k, cov), kd) for b, kd in tpl.bars],
+                      [pl(p) for p in tpl.panels])
     if not opts.frame_inner_mm:
         # keep the satin outline in proportion to the pieces so the fabric or fill still shows
         w['outline'] = round(max(0.9, min(w['outline'], 0.2 * tpl.band * k)), 2)
@@ -311,6 +321,8 @@ def objects(lay: Layout, cov, opts: Options, border_colour):
                          % (w['inner'], w['border'], border_colour))
         return pre, post, fabric, notes
 
+    if lay.kind == 'bamboo':
+        return _bamboo_objects(lay, cov, opts, border_colour, pre, post, fabric, notes)
     # pieces
     ow = w['outline']
     pieces = [p for p in lay.pieces if not p.is_empty]
@@ -348,6 +360,67 @@ def objects(lay: Layout, cov, opts: Options, border_colour):
     return pre, post, fabric, notes
 
 
+def _bamboo_objects(lay, cov, opts, colour, pre, post, fabric, notes):
+    from .satin import run_along
+    band = opts.frame_band if opts.frame_band in BAND_CHOICES else 'applique'
+    ow = lay.widths['outline']
+    B = clean(unary_union(lay.pieces))
+    blanket = band == 'applique' and opts.edge_style == 'blanket'
+    if band == 'applique':
+        pre += _appli_objs(run_along(B), run_along(B.buffer(-0.5, join_style=1)),
+                           [] if blanket else run_along(B.buffer(-1.0, join_style=1)), colour, 'frame fabric')
+        fabric.append((B, opts.frame_band_colour))
+        notes.append('Appliqué canes: stops after the placement line (lay your fabric over the whole frame) and after '
+                     'the tackdown (trim close round the outside, the middle and every opening).')
+    elif band == 'fill':
+        for c in lay.cells:
+            inner = clean(c.buffer(0.15, join_style=2).intersection(B.buffer(-(ow - 0.5), join_style=1)))
+            pre += _fills(inner, opts.frame_band_colour, opts, _long_angle(c), 'Frame fill')
+        notes.append('Canes filled in %s, each with its stitches running along the cane.' % opts.frame_band_colour)
+    else:
+        notes.append('Canes left as the base fabric, outlined in satin.')
+    if opts.frame_center == 'fill':
+        for p in lay.panels:
+            pre += _fills(clean(p.buffer(0.3, join_style=1)), opts.frame_center_colour, opts, -45, 'Panel fill')
+    _centre(lay.inner, cov, opts, pre, notes)
+    # the details: node bands, mitres and crossings, as short satin bars sewn before the outline
+    from .plan import Obj
+    from shapely.geometry import LineString
+    bw = 0.8 if ow < 1.3 else 0.95
+    cols = []
+    for ln, kind in lay.bars:
+        if ln.length < 1.2:
+            continue
+        a, b = ln.coords[0], ln.coords[-1]
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        L = math.hypot(dx, dy)
+        nx, ny = -dy / L * bw / 2, dx / L * bw / 2
+        cols.append([[(a[0] + nx, a[1] + ny), (b[0] + nx, b[1] + ny)], [(a[0] - nx, a[1] - ny), (b[0] - nx, b[1] - ny)]])
+    if cols:
+        cols = _chain_order(cols)
+        post.append(Obj('satin', colour, seqs=cols, label='Bamboo details',
+                        params={'zigzag_spacing_mm': '0.30', 'pull_compensation_mm': '0.15',
+                                'center_walk_underlay': 'False', 'contour_underlay': 'False',
+                                'zigzag_underlay': 'False', 'running_stitch_length_mm': '1.5', '_width': bw,
+                                '_trim': True}))
+    post += satin_objs(B, ow, colour, 'Frame outlines', outer_offset=0.4 if band == 'applique' else 0.0,
+                       holes=True, spacing=0.36, pull_mm=opts.pull(), method='e_stitch' if blanket else 'satin_column')
+    notes.append('Node bands and joints in %.1f mm satin, then every cane outlined in a %.1f mm satin in %s, sewn last.'
+                 % (bw, ow, colour))
+    return pre, post, fabric, notes
+
+
+def _chain_order(cols):
+    """Order short satin bars so each starts near where the last one ended (less travelling)."""
+    left = list(cols)
+    out = [left.pop(0)]
+    while left:
+        end = out[-1][0][-1]
+        k = min(range(len(left)), key=lambda i: math.dist(end, left[i][0][0]))
+        out.append(left.pop(k))
+    return out
+
+
 def _centre(I, cov, opts, pre, notes):
     if opts.frame_center == 'fill' and I is not None:
         centre = clean(I.buffer(0.3, join_style=1).difference(cov.buffer(-0.35, join_style=1)))
@@ -365,6 +438,8 @@ def frame_catalogue():
         if t.kind == 'ring':
             I = t.inner if t.inner is not None else clean(g.buffer(-0.22, join_style=1))
             shape = clean(g.difference(I))
+        elif t.kind == 'bamboo':
+            shape = t.parts[0]
         else:
             shape = clean(unary_union(t.parts + t.nodes))
         out[k] = (t.label, t.kind, shapes.outline_path(shape))

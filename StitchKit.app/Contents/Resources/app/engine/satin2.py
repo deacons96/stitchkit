@@ -130,7 +130,10 @@ def satin_objs(region, width, colour, label, outer_offset=0.0, holes=True, only_
               'zigzag_underlay': 'True' if width >= 3.4 else 'False',
               'zigzag_underlay_spacing_mm': '2.5', 'zigzag_underlay_inset_mm': '0.6',
               'short_stitch_inset': '15', 'short_stitch_distance_mm': '0.2',
-              'running_stitch_length_mm': '2.0', '_width': width}
+              'running_stitch_length_mm': '2.0', '_width': width,
+              # one column after another: trim between them (short hops are sewn by steps.tidy_jumps), so no
+              # travel stitch is ever dragged across an open space
+              '_trim': True}
     if method != 'satin_column':
         params['satin_method'] = method
         if method == 'e_stitch':

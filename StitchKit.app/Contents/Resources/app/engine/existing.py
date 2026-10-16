@@ -43,6 +43,14 @@ def read_stitch_file(path):
     return p
 
 
+def clean_pattern(path):
+    """A stitch file with its quirks tidied (long moves from the hoop centre become jumps), for pictures."""
+    from .steps import steps_from_pattern, assemble
+    p = read_stitch_file(path)
+    pat, _info = assemble(steps_from_pattern(p))
+    return pat
+
+
 def blocks(p):
     """[(thread, [[x, y, cmd], ...])] with colour-change/end commands stripped."""
     out = []

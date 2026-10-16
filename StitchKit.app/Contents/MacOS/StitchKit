@@ -1,0 +1,59 @@
+#!/bin/bash
+# StitchKit for Mac. Double-click the app: it sets itself up the first time (needs the internet,
+# a few minutes), then opens StitchKit in your web browser. Nothing to type.
+APP="$(cd "$(dirname "$0")/../Resources/app" && pwd)"
+SUPPORT="$HOME/Library/Application Support/StitchKit"
+VENV="$SUPPORT/venv"
+LOG="$SUPPORT/setup.log"
+URL="http://127.0.0.1:5077"
+mkdir -p "$SUPPORT"
+export PATH="$SUPPORT/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+
+# already open? just show it
+if curl -s --max-time 2 "$URL/api/version" >/dev/null 2>&1; then
+  open "$URL"
+  exit 0
+fi
+
+SETUP_PAGE=0
+REQ="$(cat "$APP/requirements.txt" "$APP/requirements-nodeps.txt" | shasum | cut -d' ' -f1)"
+if [ ! -x "$VENV/bin/python" ] || [ "$(cat "$SUPPORT/parts.hash" 2>/dev/null)" != "$REQ" ]; then
+  # a page that waits for StitchKit and opens it when it's ready
+  rm -f "$SUPPORT/failed.svg"
+  SETUP_PAGE=1
+  cp "$APP/assets/setting_up.html" "$SUPPORT/setting_up.html"
+  cp "$APP/assets/icon.svg" "$SUPPORT/icon.svg"
+  open "$SUPPORT/setting_up.html"
+  {
+    echo "=== StitchKit setup $(date) ==="
+    if ! command -v uv >/dev/null 2>&1; then
+      echo "Getting uv (installs Python for StitchKit)..."
+      curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="$SUPPORT/bin" UV_NO_MODIFY_PATH=1 sh || exit 1
+    fi
+    rm -rf "$VENV"
+    uv venv --python 3.12 "$VENV" || exit 1
+    uv pip install --python "$VENV" -r "$APP/requirements.txt" || exit 1
+    uv pip install --python "$VENV" --no-deps -r "$APP/requirements-nodeps.txt" || exit 1
+    "$VENV/bin/python" "$APP/tests/selftest.py" || exit 1
+    echo "$REQ" > "$SUPPORT/parts.hash"
+    echo "=== done ==="
+  } >> "$LOG" 2>&1
+  if [ ! -f "$SUPPORT/parts.hash" ] || [ "$(cat "$SUPPORT/parts.hash")" != "$REQ" ]; then
+    cp "$APP/assets/failed.svg" "$SUPPORT/failed.svg"
+    osascript -e 'display dialog "StitchKit could not finish setting up. Check your internet connection and open StitchKit again.\n\nThe details are saved in Library › Application Support › StitchKit › setup.log (send that file to Claude if it keeps happening)." with title "StitchKit" buttons {"OK"} default button "OK" with icon caution' >/dev/null 2>&1
+    exit 1
+  fi
+fi
+
+cd "$APP" || exit 1
+nohup "$VENV/bin/python" "$APP/app.py" --auto-quit --no-browser > "$SUPPORT/stitchkit.log" 2>&1 &
+for i in $(seq 1 60); do
+  sleep 0.5
+  if curl -s --max-time 1 "$URL/api/version" >/dev/null 2>&1; then
+    # the setting-up page opens StitchKit by itself; otherwise open it here
+    if [ "$SETUP_PAGE" = "0" ]; then open "$URL"; fi
+    exit 0
+  fi
+done
+osascript -e 'display dialog "StitchKit did not start. The details are in Library › Application Support › StitchKit › stitchkit.log." with title "StitchKit" buttons {"OK"} default button "OK" with icon caution' >/dev/null 2>&1
+exit 1

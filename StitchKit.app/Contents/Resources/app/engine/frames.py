@@ -31,6 +31,9 @@ class FrameTemplate:
     parts: list = field(default_factory=list)    # pieces frames: band pieces
     nodes: list = field(default_factory=list)    # extra outlined details (bamboo joints)
     band: float = 0.0                 # pieces frames: piece thickness in unit coords (for reporting)
+    cells: list = field(default_factory=list)    # bamboo: each cane, for fills along its length
+    bars: list = field(default_factory=list)     # bamboo: [(LineString, 'node' | 'mitre')] satin details
+    panels: list = field(default_factory=list)   # bamboo: open spaces between canes
 
 
 # ---------------------------------------------------------------- ring outlines
@@ -93,7 +96,7 @@ def _label_bracket(w=1.0, h=0.78):
 
 def _greek_key():
     """Four bars, each ending in a squared key hook that turns inward (as in a Greek key frame)."""
-    t = 0.12           # bar thickness
+    t = 0.15           # bar thickness
     a = 0.70           # where the top/bottom bars end
     e = 0.92           # bar position from centre
     k = 0.22           # hook size
@@ -112,7 +115,12 @@ def _greek_key():
     bars = [bar_top(-1), bar_top(1), bar_side(-1), bar_side(1)]
     bars_g = [clean(b.buffer(t / 2, cap_style=2, join_style=2)) for b in bars]
     # the bars cross at the corners: sew them as one interlocked piece (little square windows where they cross)
-    parts = [clean(unary_union(bars_g))]
+    joined = clean(unary_union(bars_g))
+    # tiny windows where bars cross would each get their own little satin loop: close them
+    tidy = []
+    for p in polys(joined):
+        tidy.append(Polygon(p.exterior, [r for r in p.interiors if Polygon(r).area > (t * 1.6) ** 2]))
+    parts = [clean(unary_union(tidy))]
     outer = clean(unary_union(bars_g)).convex_hull
     inner = box(-e + t / 2 + k + 0.04, -e + t / 2 + 0.06, e - t / 2 - k - 0.04, e - t / 2 - 0.06)
     inner = clean(unary_union([inner, box(-e + t / 2 + 0.06, -a + k + 0.02, e - t / 2 - 0.06, a - k - 0.02)]))
@@ -201,7 +209,7 @@ def _normalise_template(t: FrameTemplate):
     def n(g):
         return None if g is None else affinity.scale(affinity.translate(g, -cx, -cy), s, s, origin=(0, 0))
     return FrameTemplate(t.label, n(t.outer), t.kind, n(t.inner), [n(p) for p in t.parts], [n(p) for p in t.nodes],
-                         t.band * s)
+                         t.band * s, [n(c) for c in t.cells], [(n(b), k) for b, k in t.bars], [n(p) for p in t.panels])
 
 
 def built_in():
@@ -210,13 +218,19 @@ def built_in():
         'stepped': ('Stepped corners', _stepped()),
         'label_scroll': ('Scroll label', _label_scroll()),
         'label_bracket': ('Bracket label', _label_bracket()),
-        'scallop_square': ('Scalloped square', _scallop_square()),
-        'cloud': ('Cloud', _cloud()),
     }
     out = {k: _normalise_template(FrameTemplate(lab, g)) for k, (lab, g) in ring.items()}
+    # scalloped edges look best with a smooth inner line, as on classic scallop frames
+    sq = _scallop_square()
+    out['scallop_square'] = _normalise_template(FrameTemplate(
+        'Scalloped square', sq, 'ring', box(-0.6, -0.6, 0.6, 0.6).buffer(-0.1, join_style=1).buffer(0.1, join_style=1)))
+    out['cloud'] = _normalise_template(FrameTemplate('Cloud', _cloud(), 'ring', Point(0, 0).buffer(0.55, quad_segs=48)))
     out['greek_key'] = _normalise_template(_greek_key())
-    out['bamboo_square'] = _normalise_template(_bamboo_square())
-    out['bamboo_octagon'] = _normalise_template(_bamboo_octagon())
+    from . import bamboo
+    for k, f in bamboo.ALL.items():
+        d = f()
+        out[k] = _normalise_template(FrameTemplate(d['label'], d['outer'], 'bamboo', d['inner'], [d['band']], [], 0.0,
+                                                   d['cells'], d['bars'], d['panels']))
     return out
 
 

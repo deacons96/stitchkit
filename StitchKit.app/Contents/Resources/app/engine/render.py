@@ -61,7 +61,8 @@ def render(pattern, out_png, ppmm=24, fabric=(120, 150, 165), thread_mm=0.36, pa
     x0, y0 = min(xs) - pad_mm, min(ys) - pad_mm
     W = int((max(xs) - x0 + pad_mm) * ppmm)
     H = int((max(ys) - y0 + pad_mm) * ppmm)
-    img = Image.new('RGB', (W, H), fabric)
+    clear = fabric is None
+    img = Image.new('RGBA' if clear else 'RGB', (W, H), (0, 0, 0, 0) if clear else fabric)
     d = ImageDraw.Draw(img)
     tw = max(1, int(round(thread_mm * ppmm)))
     for poly, hx in (underlays or []):
@@ -72,7 +73,7 @@ def render(pattern, out_png, ppmm=24, fabric=(120, 150, 165), thread_mm=0.36, pa
             ring = lambda c: [((x - x0) * ppmm, (y - y0) * ppmm) for x, y in c.coords]
             d.polygon(ring(part.exterior), fill=col)
             for hole in part.interiors:
-                d.polygon(ring(hole), fill=fabric)
+                d.polygon(ring(hole), fill=(0, 0, 0, 0) if clear else fabric)
     for (r, g, b), pts in bl:
         dark = (int(r * .62), int(g * .62), int(b * .62))
         lite = (min(255, int(r * 1.0 + 38)), min(255, int(g * 1.0 + 38)), min(255, int(b * 1.0 + 38)))

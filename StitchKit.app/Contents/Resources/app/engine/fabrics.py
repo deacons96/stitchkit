@@ -104,6 +104,8 @@ def supplies(fabric_key, kind='design', applique=False, stitched_background=Fals
     rows.append(('Topping', top))
     if applique:
         rows.append(('Appliqué', APPLIQUE_FUSE))
+        if kind == 'patch':
+            rows.append(('Base', 'Peltex I 71F (optional) under the appliqué fabric gives a firm, stiff patch'))
     if f.get('extras'):
         rows.append(('Also', f['extras']))
     return rows

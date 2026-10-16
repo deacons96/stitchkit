@@ -9,7 +9,7 @@ import pickle
 import subprocess
 import sys
 import tempfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 import pystitch
@@ -27,6 +27,7 @@ class Step:
     name: str = ''                   # thread name shown on the machine, when it should say something special
     stop_after: bool = False         # machine pauses after this step (lay fabric, trim, your own stop)
     user_stop: bool = False          # ...because you asked for it
+    hint: str = ''                   # thread name in a stitch file you brought in ('Placement Line'...)
 
 
 @dataclass
@@ -36,6 +37,7 @@ class Result:
     notes: list = field(default_factory=list)
     kind: str = 'design'
     outline: object = None                          # outer cut line of a patch/frame (mm), if any
+    guide: list = field(default_factory=list)       # step-by-step instructions (bag tags)
 
     def bounds_mm(self):
         xs, ys = [], []
@@ -56,24 +58,24 @@ class Result:
 
     def translate(self, dx_mm, dy_mm):
         dx, dy = dx_mm * 10, dy_mm * 10
-        steps = [Step(s.label, s.colour, [[x + dx, y + dy, c] for x, y, c in s.stitches], s.name, s.stop_after) for s in self.steps]
+        steps = [replace(s, stitches=[[x + dx, y + dy, c] for x, y, c in s.stitches]) for s in self.steps]
         fab = [(affinity.translate(p, dx_mm, dy_mm), c) for p, c in self.fabric]
         ol = affinity.translate(self.outline, dx_mm, dy_mm) if self.outline is not None else None
-        return Result(steps, fab, list(self.notes), self.kind, ol)
+        return Result(steps, fab, list(self.notes), self.kind, ol, list(self.guide))
 
     def rotate90(self):
         """Quarter turn clockwise (for fitting a hoop the other way round)."""
-        steps = [Step(s.label, s.colour, [[-y, x, c] for x, y, c in s.stitches], s.name, s.stop_after) for s in self.steps]
+        steps = [replace(s, stitches=[[-y, x, c] for x, y, c in s.stitches]) for s in self.steps]
         m = [0, -1, 1, 0, 0, 0]
         fab = [(affinity.affine_transform(p, m), c) for p, c in self.fabric]
         ol = affinity.affine_transform(self.outline, m) if self.outline is not None else None
-        return Result(steps, fab, list(self.notes), self.kind, ol)
+        return Result(steps, fab, list(self.notes), self.kind, ol, list(self.guide))
 
     def scaled(self, k):
-        steps = [Step(s.label, s.colour, [[x * k, y * k, c] for x, y, c in s.stitches], s.name, s.stop_after) for s in self.steps]
+        steps = [replace(s, stitches=[[x * k, y * k, c] for x, y, c in s.stitches]) for s in self.steps]
         fab = [(affinity.scale(p, k, k, origin=(0, 0)), c) for p, c in self.fabric]
         ol = affinity.scale(self.outline, k, k, origin=(0, 0)) if self.outline is not None else None
-        return Result(steps, fab, list(self.notes), self.kind, ol)
+        return Result(steps, fab, list(self.notes), self.kind, ol, list(self.guide))
 
     def centred(self):
         x0, y0, x1, y1 = self.bounds_mm()
@@ -93,15 +95,30 @@ def hexcol(t):
     return '#%02x%02x%02x' % (t.get_red(), t.get_green(), t.get_blue())
 
 
+def _long_to_jumps(st, limit=125):
+    """A 'stitch' longer than any machine can sew (some programs write the move from the hoop centre to
+    the first stitch that way) is really a jump."""
+    out, prev = [], None
+    for x, y, c in st:
+        if c == STITCH and prev is not None and (x - prev[0]) ** 2 + (y - prev[1]) ** 2 > limit ** 2:
+            c = JUMP
+        out.append([x, y, c])
+        prev = (x, y)
+    # a jump at the very start of a block is just where the needle goes first
+    while len(out) > 1 and out[0][2] == STITCH and out[1][2] == JUMP:
+        out.pop(0)
+    return out
+
+
 def steps_from_pattern(p, label='Design'):
     """Colour blocks of an existing pattern become steps (machine coordinates kept as they are)."""
     out = []
     n = 0
     for stitches, thread in p.get_as_colorblocks():
-        st = [[s[0], s[1], s[2] & 0xFF] for s in stitches if s[2] & 0xFF in (STITCH, JUMP, TRIM)]
+        st = _long_to_jumps([[s[0], s[1], s[2] & 0xFF] for s in stitches if s[2] & 0xFF in (STITCH, JUMP, TRIM)])
         if any(c == STITCH for _, _, c in st):
             n += 1
-            out.append(Step(label, hexcol(thread), st))
+            out.append(Step(label, hexcol(thread), st, hint=(getattr(thread, 'description', '') or '').strip()))
     if len(out) > 1:
         for i, s in enumerate(out):
             s.label = '%s, colour %d' % (label, i + 1)

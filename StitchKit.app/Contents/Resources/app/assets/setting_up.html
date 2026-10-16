@@ -1,0 +1,15 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Setting up StitchKit</title>
+<style>body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#edf2f7;color:#1e2740;font:16px/1.5 "Avenir Next",Helvetica,sans-serif;text-align:center}
+.box{max-width:460px;padding:30px}h1{font:400 30px Didot,"Bodoni 72",Georgia,serif;margin:16px 0 8px}
+.s{width:56px;height:56px;border:3px dashed #b3264f;border-radius:50%;margin:0 auto;animation:spin 3s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.err{color:#7e1736;display:none}</style></head><body><div class="box">
+<div class="s" id="sp"></div><h1>Setting up StitchKit</h1>
+<p id="msg">The first time takes about five minutes while StitchKit fetches its stitching parts. This page opens StitchKit by itself when it's ready.</p>
+<p class="err" id="err">Setup did not finish. Check the internet connection and open StitchKit again. The details are in Library › Application Support › StitchKit › setup.log.</p>
+</div>
+<script>
+function tryOpen(){ const i = new Image(); i.onload = () => location.href = 'http://127.0.0.1:5077'; i.src = 'http://127.0.0.1:5077/static/icon.svg?t=' + Date.now(); }
+function failed(){ const f = new Image(); f.onload = () => { document.getElementById('err').style.display = 'block'; document.getElementById('msg').style.display = 'none'; document.getElementById('sp').style.animation = 'none'; };
+  f.src = 'failed.svg?t=' + Date.now(); }
+setInterval(() => { tryOpen(); failed(); }, 3000);
+</script></body></html>
