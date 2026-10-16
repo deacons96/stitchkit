@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension translationdomain="inkstitch" xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+    <name>Cleanup Document</name>
+    <id>org.{{ id_inkstitch }}.cleanup</id>
+    <param name="extension" type="string" gui-hidden="true">cleanup</param>
+
+    <param name="notebook" type="notebook">
+        <page name="options" gui-text="Options">
+            <param name="rm_fill" type="boolean" gui-text="Remove Small Fill Areas"
+                   gui-description="Removes areas smaller than defined by threshold.">true</param>
+            <param name="fill_threshold" type="float" gui-text="Fill area threshold (mm²)" min="0" max="800">5</param>
+            <param name="rm_stroke" type="boolean" gui-text="Remove Small strokes"
+                   gui-description="Removes small strokes shorter than defined by threshold.">true</param>
+            <param name="stroke_threshold" type="float" gui-text="Stroke threshold (mm)" min="0" max="800">1.35</param>
+            <param name="rm_satin" type="boolean" gui-text="Remove Small satins"
+                   gui-description="Removes small satin columns shorter than defined by threshold.">true</param>
+            <param name="satin_threshold" type="float" gui-text="Satin threshold (mm)" min="0" max="800">1.35</param>
+            <param name="rm_groups" type="boolean" gui-text="Remove empty layers and groups">true</param>
+            <spacer />
+            <separator />
+            <spacer />
+            <param name="dry_run" type="boolean" gui-text="Test run"
+                gui-description="Only display labels and ids of affected elements and groups without removing them.">true</param>
+        </page>
+        <page name="info" gui-text="Help">
+            <label>Use this extension to remove small objects from the selection.
+                   With no selection, small element from the entire document will be removed.</label>
+            <spacer />
+            <label>More information on our website</label>
+            <label appearance="url">https://inkstitch.org/docs/troubleshoot/#cleanup-document</label>
+        </page>
+    </param>
+
+    <effect>
+        <object-type>all</object-type>
+        <icon>{{ icon_path }}inx/cleanup_document.svg</icon>
+        <menu-tip>Remove small unstitchable elements</menu-tip>
+        <effects-menu>
+            <submenu name="{{ menu_inkstitch }}" translatable="no">
+                <submenu name="Troubleshoot" />
+            </submenu>
+        </effects-menu>
+    </effect>
+    <script>
+        {{ command_tag | safe }}
+    </script>
+</inkscape-extension>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension translationdomain="inkstitch" xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+    <name>Force lock stitches</name>
+    <id>org.{{ id_inkstitch }}.force_lock_stitches</id>
+    <param name="extension" type="string" gui-hidden="true">lettering_force_lock_stitches</param>
+
+    <param name="notebook" type="notebook">
+        <page name="options" gui-text="Options">
+            <param name="satin_only" type="boolean" gui-text="Restrict to Satin">false</param>
+            <spacer />
+            <separator />
+            <spacer />
+            <param name="distance" type="boolean" gui-text="Add forced lock stitches by distance"
+                   gui-description="Add lock stitches when the following jump stitch is in the specified size range">false</param>
+            <param name="min_distance" type="float" gui-text="Minimum distance (mm)" min="0" max="50">1</param>
+            <param name="max_distance" type="float" gui-text="Maximum distance (mm)" min="0.1" max="500">3</param>
+            <spacer />
+            <separator />
+            <spacer />
+            <param name="last_element" type="boolean" gui-text="Add forced lock stitches to the last element of each glyph">false</param>
+            <param name="last_group_element" type="boolean" gui-text="Add forced lock stitches to the last element of each group">false</param>
+        </page>
+        <page name="info" gui-text="Help">
+            <label >
+                Small fonts will sometimes unravel if threads are cut after the embroidery machine has finished the work.
+                Therefore it is important that also diacritics with a smaller distance to the font body than defined by the collapse length value (default: 3mm) have lock stitches.
+                This can be achieved by adding a forced lock stitch attribute to them.
+            </label>
+            <separator />
+            <label>
+                This extension has been build to help font authors to define "force lock stitches"-attributes automatically if they are placed in a predefined distance to the next object.
+            </label>
+            <spacer />
+            <label>More information on our website</label>
+            <label appearance="url">https://inkstitch.org/docs/font-tools/#force-lock-stitches</label>
+        </page>
+    </param>
+
+    <effect needs-live-preview="false">
+        <object-type>all</object-type>
+        <icon>{{ icon_path }}inx/font_management.svg</icon>
+        <menu-tip>Sets the forces lock stitch attribute on elements when the next element lies within a specified distance</menu-tip>
+        <effects-menu>
+            <submenu name="{{ menu_inkstitch }}" translatable="no">
+                <submenu name="Font Management" />
+            </submenu>
+        </effects-menu>
+    </effect>
+
+    <script>
+        {{ command_tag | safe }}
+    </script>
+</inkscape-extension>

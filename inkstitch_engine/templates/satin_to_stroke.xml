@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension translationdomain="inkstitch" xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+    <name>Satin to Stroke</name>
+    <id>org.{{ id_inkstitch }}.satin_to_stroke</id>
+    <param name="extension" type="string" gui-hidden="true">satin_to_stroke</param>
+
+    <param name="notebook" type="notebook">
+        <page name="options" gui-text="Options">
+        <param name="keep_satin" type="boolean" gui-text="Keep satin column"
+           gui-description="Do not delete original satin column.">false</param>
+        </page>
+        <page name="info" gui-text="Help">
+            <label>Converts a satin column into a running stitch.</label>
+            <spacer />
+            <label>More information on our website</label>
+            <label appearance="url">https://inkstitch.org/docs/stroke-tools/#convert-satin-to-stroke</label>
+        </page>
+    </param>
+
+    <effect>
+        <object-type>all</object-type>
+        <icon>{{ icon_path }}inx/satin_to_stroke.svg</icon>
+        <effects-menu>
+            <submenu name="{{ menu_inkstitch }}" translatable="no">
+                <submenu name="Tools: Stroke" />
+            </submenu>
+        </effects-menu>
+    </effect>
+
+    <script>
+        {{ command_tag | safe }}
+    </script>
+</inkscape-extension>

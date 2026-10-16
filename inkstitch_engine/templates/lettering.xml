@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension translationdomain="inkstitch" xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+    <name>Lettering Tool</name>
+    <id>org.{{ id_inkstitch }}.lettering</id>
+    <param name="extension" type="string" gui-hidden="true">lettering</param>
+    <effect implements-custom-gui="true" show-stderr="true">
+        <object-type>all</object-type>
+        <icon>{{ icon_path }}inx/lettering.svg</icon>
+        <menu-tip>Insert ready-to-embroider text into the document</menu-tip>
+        <effects-menu>
+            <submenu name="{{ menu_inkstitch }}" translatable="no">
+                <submenu name="Lettering" />
+            </submenu>
+        </effects-menu>
+    </effect>
+    <script>
+        {{ command_tag | safe }}
+    </script>
+</inkscape-extension>

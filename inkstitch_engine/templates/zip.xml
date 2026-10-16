@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension translationdomain="inkstitch" xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+    <name>embroidery ZIP file output</name>
+    <id>org.{{ id_inkstitch }}.output.zip</id>
+    <output>
+        <extension>.zip</extension>
+        <mimetype>application/zip</mimetype>
+        <filetypename>{{ menu_inkstitch }}: ZIP export multiple formats and extra options (.zip)</filetypename>
+        <filetypetooltip>Create a ZIP with multiple embroidery file formats using Ink/Stitch</filetypetooltip>
+        <dataloss>true</dataloss>
+    </output>
+    <param name="extension" type="string" gui-hidden="true">zip</param>
+    <param name="custom-file-name" type="string" gui-text="Custom file name"
+       gui-description="Defines the file names inside the zip archive. Leave empty for default file name."></param>
+    <spacer />
+    <param name="notebook" type="notebook">
+      <page name="file-formats" gui-text="File Formats">
+        <label>Output formats:</label>
+        <hbox>
+            <vbox>
+                {%- for format, description, mimetype, category in formats %}
+                {%- if category != "vector" and category != "debug" %}
+                <param name="format-{{ format }}" type="boolean" gui-text=".{{ format | upper }}: {{ description }}">false</param>
+                {%- endif %}
+            {%- if loop.index == 13 %}
+            </vbox>
+            <spacer />
+            <separator />
+            <spacer />
+            <vbox>
+            {%- endif %}
+                {%- endfor %}
+                <param name="format-threadlist" type="boolean" gui-text=".TXT: Threadlist [COLOR]">false</param>
+            </vbox>
+            <spacer />
+            <separator />
+            <spacer />
+            <vbox>
+                <param name="format-svg" type="boolean" gui-text=".SVG: Scalable Vector Graphic">false</param>
+                <param name="format-png-realistic" type="boolean" gui-text=".PNG: Portable Network Graphics (Realistic) [IMAGE]">false</param>
+                    <param name="dpi-realistic" type="int" min="100" max="2000" gui-text="DPI" indent="4">300</param>
+                <param name="format-png-simple" type="boolean" gui-text=".PNG: Portable Network Graphics (Simple) [IMAGE]">false</param>
+                    <param name="png-simple-line-width" type="float" precision="2" min="0.01" max="5" gui-text="Line width (mm)" indent="4">0.3</param>
+                    <param name="dpi-simple" type="int" min="100" max="2000" gui-text="DPI" indent="4">300</param>
+            </vbox>
+        </hbox>
+      </page>
+      <page name="panelization" gui-text="Panelization Options">
+        <label>For single design set horizontal and vertical repeats to 1</label>
+        <spacer />
+        <param name="x-repeats" type="int" min="1" max="20" gui-text="Horizontal repeats">1</param>
+        <param name="x-spacing" type="float" min="-1000" max="1000" gui-text="Horizontal spacing (mm)">100</param>
+        <param name="y-repeats" type="int" min="1" max="20" gui-text="Vertical repeats">1</param>
+        <param name="y-spacing" type="float" min="-1000" max="1000" gui-text="Vertical spacing (mm)">100</param>
+      </page>
+      <page name="info" gui-text="Help">
+        <label appearance="header">Zip File Export</label>
+        <label>Export multiple embroidery file formats at once.</label>
+        <separator />
+        <label>Read more on our website:</label>
+        <label appearance="url">https://inkstitch.org/docs/import-export/#batch-export</label>
+      </page>
+    </param>
+    <script>
+        {{ command_tag | safe }}
+    </script>
+</inkscape-extension>

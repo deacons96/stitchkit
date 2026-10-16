@@ -1,0 +1,982 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StitchKit</title>
+<style>
+:root{
+  --bg:#f4f1ea; --panel:#fffdf8; --ink:#1f1d1a; --muted:#6c665c; --line:#e3ddd0;
+  --accent:#2f5d50; --accent-ink:#fff; --soft:#e8efe9; --warn:#9a4b1d; --fabric:#7896a5;
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#1a1917; --panel:#242220; --ink:#efeae0; --muted:#a59e92; --line:#38352f;
+        --accent:#7fb3a2; --accent-ink:#10201b; --soft:#26302c; --warn:#e3a06f;}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:18px 28px 6px;flex-wrap:wrap}
+header h1{font-size:22px;margin:0;letter-spacing:.2px}
+header .tag{color:var(--muted);font-size:14px}
+.badge{font-size:12px;border:1px solid var(--accent);color:var(--accent);border-radius:999px;padding:2px 9px;cursor:pointer;background:none;font-family:inherit}
+header .spacer{flex:1}
+.hbtn{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 11px;border-radius:9px;cursor:pointer}
+.useg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.useg button{border:0;background:var(--panel);color:var(--ink);font:inherit;font-size:14px;padding:6px 11px;cursor:pointer}
+.useg button.on{background:var(--accent);color:var(--accent-ink)}
+main{display:grid;grid-template-columns:minmax(310px,400px) 1fr;gap:22px;padding:14px 28px 40px;align-items:start}
+@media (max-width:860px){main{grid-template-columns:1fr;padding:12px 16px 32px}header{padding:16px 16px 4px}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.step{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
+.step:first-child{border:0;padding:0;margin:0}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:0 0 10px}
+h4{margin:12px 0 4px;font-size:13px;color:var(--muted);font-weight:600}
+label{display:block}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:18px;text-align:center;cursor:pointer;color:var(--muted)}
+.drop.over{border-color:var(--accent);background:var(--soft)}
+.drop b{color:var(--ink)}
+.seg{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px;flex-wrap:wrap}
+.seg button{flex:1 1 auto;border:0;background:transparent;color:var(--ink);padding:7px 6px;border-radius:8px;font:inherit;font-size:14px;cursor:pointer;white-space:nowrap}
+.seg button.on{background:var(--accent);color:var(--accent-ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:5px 11px;cursor:pointer;user-select:none;background:var(--panel)}
+.chip input{display:none}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.row{display:flex;gap:10px;align-items:flex-end;margin-top:10px;flex-wrap:wrap}
+.row > label{flex:1;min-width:120px}
+.small{font-size:13px;color:var(--muted)}
+select,input[type=number],input[type=text]{width:100%;font:inherit;padding:7px 9px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+input[type=color]{width:44px;height:34px;border:1px solid var(--line);border-radius:8px;background:none;padding:2px;display:block}
+.check{display:flex;gap:8px;align-items:flex-start;margin-top:8px}
+.check input{margin-top:3px}
+.swatches{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.sw{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.sw i{width:20px;height:20px;border-radius:5px;border:1px solid var(--line);display:inline-block;flex:none}
+button.go{width:100%;margin-top:16px;border:0;background:var(--accent);color:var(--accent-ink);font-family:inherit;font-size:16px;font-weight:600;padding:14px;border-radius:11px;cursor:pointer}
+button.go:disabled{opacity:.5;cursor:default}
+.hidden{display:none!important}
+.status{margin-top:12px;font-size:14px;color:var(--muted);min-height:20px}
+.err{color:var(--warn);white-space:pre-wrap}
+.bar{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .4s}
+.results{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.card .img{background:var(--fabric);aspect-ratio:1/1;display:flex;align-items:center;justify-content:center}
+.card img{max-width:100%;max-height:100%;display:block}
+.card .meta{padding:12px 14px}
+.card h3{margin:0 0 4px;font-size:16px}
+.card ul{margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
+.dl{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.dl a{font-size:13px;color:var(--accent);text-decoration:none;border:1px solid var(--line);border-radius:7px;padding:3px 8px}
+.empty{color:var(--muted);text-align:center;padding:60px 20px;border:1px dashed var(--line);border-radius:14px}
+.toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.toolbar a,.toolbar button{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 12px;border-radius:9px;text-decoration:none;cursor:pointer}
+.tip{font-size:13px;color:var(--muted);margin-top:6px}
+.shapes{display:grid;grid-template-columns:repeat(auto-fill,minmax(66px,1fr));gap:6px;margin:6px 0 4px}
+.shp{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:6px 2px 4px;cursor:pointer;text-align:center;font-size:11px;color:var(--muted);line-height:1.2}
+.shp svg{display:block;margin:0 auto 3px;width:40px;height:40px}
+.shp svg path{fill:var(--soft);stroke:var(--ink);stroke-width:1.6;fill-rule:evenodd}
+.shp.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset;color:var(--ink)}
+.rep{margin-top:6px;font-size:13px;padding:6px 8px;border-radius:8px;background:var(--soft)}
+.rep.dense{background:#f6e3d3;color:#6b3410}
+.tline{border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px;background:var(--bg)}
+.tline .row{margin-top:8px}
+.tline input[type=text].tt{font-size:16px}
+.x{float:right;border:0;background:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1}
+.fprev{margin-top:6px;min-height:22px;font-size:22px;line-height:1.2;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.fprev img{max-width:100%;max-height:60px;display:block;background:#fff;border-radius:6px}
+.arch{display:flex;align-items:center;gap:8px}
+.arch input{flex:1}
+.addline{margin-top:10px;border:1px dashed var(--line);background:none;color:var(--accent);font:inherit;padding:8px 12px;border-radius:9px;cursor:pointer;width:100%}
+.blocks{margin-top:8px;font-size:13px}
+.blocks div{display:flex;gap:8px;align-items:center;padding:3px 0;border-bottom:1px solid var(--line)}
+.blocks div:last-child{border:0}
+.blocks .n{color:var(--muted);width:18px;text-align:right;flex:none}
+.blocks .stop{color:var(--warn);font-size:12px;margin-left:auto;white-space:nowrap}
+details{margin-top:8px;font-size:13px}
+details summary{cursor:pointer;color:var(--accent)}
+.stepl label{display:flex;gap:8px;align-items:center;padding:3px 0}
+.stepl .lock{color:var(--muted);font-size:12px}
+.mini{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:5px 10px;border-radius:8px;cursor:pointer;margin-top:6px}
+.hoopline{font-size:13px;margin-top:4px}
+.modal{position:fixed;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;z-index:9;padding:16px}
+.modal .box{background:var(--panel);color:var(--ink);border-radius:14px;max-width:520px;width:100%;padding:20px;max-height:86vh;overflow:auto}
+.modal h3{margin:0 0 8px}
+.modal .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.modal .acts button{font:inherit;padding:9px 14px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.modal .acts button.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.modal pre{white-space:pre-wrap;font:inherit;font-size:14px;margin:0}
+.plist div{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);gap:8px}
+#arrange{margin-bottom:16px}
+#canvaswrap{background:var(--fabric);border-radius:14px;border:1px solid var(--line);overflow:hidden;touch-action:none}
+#canvas{display:block;width:100%;height:auto;max-height:70vh}
+#canvas .item{cursor:grab}
+#canvas .sel{outline:none}
+.arrtools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.arrtools button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:5px 10px;border-radius:8px;cursor:pointer}
+.arrtools input[type=range]{width:140px}
+.supplies{font-size:13px;margin-top:8px;display:grid;grid-template-columns:auto 1fr;gap:3px 10px}
+.supplies b{color:var(--muted);font-weight:600}
+.files div{display:flex;align-items:center;gap:8px;font-size:14px;padding:4px 0}
+.files div span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (prefers-color-scheme: dark){.rep.dense{background:#3a2a1e;color:#f0c49c}}
+</style>
+</head>
+<body>
+<header>
+  <h1>StitchKit</h1><button class="badge" id="ver" title="What's new">{{VERSION}}</button>
+  <span class="tag">Digitize, make patches and frames. Everything stays on this Mac.</span>
+  <span class="spacer"></span>
+  <span class="useg" id="units"><button data-u="in">in</button><button data-u="mm">mm</button></span>
+  <button class="hbtn" id="projbtn">Projects</button>
+  <button class="hbtn" id="setbtn">Settings</button>
+</header>
+<main>
+<section class="panel" id="form">
+  <div class="step">
+    <h2>1. Start with</h2>
+    <div class="seg" id="source">
+      <button data-v="art" class="on">Artwork</button><button data-v="stitch">Stitch file</button><button data-v="text">Text</button><button data-v="monogram">Monogram</button><button data-v="arrange">Arrange files</button>
+    </div>
+    <div id="filebox" class="step" style="border:0;padding-top:10px;margin-top:0">
+      <div class="drop" id="drop"><b id="droptitle">Drop an SVG, PNG or JPG here</b><br><span class="small" id="dropsub">or click to choose</span></div>
+      <input type="file" id="file" class="hidden">
+      <div id="recentbox" class="hidden"><h4>Recent files</h4><div id="recent" class="files"></div></div>
+    </div>
+    <div class="row"><label>Name<input type="text" id="name" placeholder="used for the file names"></label></div>
+    <div id="artinfo" class="hidden">
+      <div id="bitmapopts" class="row hidden">
+        <label>Thread colours in the picture
+          <select id="colours"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option><option>8</option></select>
+        </label>
+      </div>
+      <div class="swatches" id="swatches"></div>
+      <div id="reducedwrap" class="hidden"><div class="small" style="margin-top:8px">How the colours will be stitched:</div>
+        <img id="reduced" alt="Picture with merged colours" style="max-width:100%;border-radius:8px;border:1px solid var(--line);margin-top:4px"></div>
+      <div class="row hidden" id="vcrow"><button class="mini" id="vcopen" type="button">Open in VectorCraft</button>
+        <button class="mini" id="vcreload" type="button">Reload after saving</button></div>
+      <div class="tip" id="artnotes"></div>
+    </div>
+    <div id="arrfiles" class="files hidden"></div>
+    <div id="monobox" class="hidden">
+      <div class="row">
+        <label>First<input type="text" id="m_first" maxlength="1" placeholder="A"></label>
+        <label>Middle<input type="text" id="m_middle" maxlength="1" placeholder="B"></label>
+        <label>Last<input type="text" id="m_last" maxlength="1" placeholder="C"></label>
+      </div>
+      <div class="row"><label>Layout<select id="m_layout">
+        <option value="classic">Classic: first, BIG last, middle</option>
+        <option value="row">Equal letters in a row: first, middle, last</option>
+        <option value="stacked">Stacked: first, middle, last</option></select></label></div>
+      <div class="row"><label>Font<select id="m_font" class="fontsel"></select></label></div>
+      <div class="row">
+        <label>Big letter height, <span class="u"></span><input type="number" class="len" id="m_height" step="0.05" value="1.5" data-in="1.5"></label>
+        <label>Space between, mm<input type="number" id="m_spacing" step="0.5" value="2"></label>
+        <label style="flex:0">Thread<input type="color" id="m_colour" value="#151011"></label>
+      </div>
+      <div class="tip">Classic puts the last-name initial big in the middle, with the first-name initial on the left and the middle initial on the right.</div>
+    </div>
+  </div>
+
+  <div class="step" id="textstep">
+    <h2>Text <span id="textopt">(optional)</span></h2>
+    <div class="tip" style="margin-top:0">Embroidery fonts are hand-digitized and stitch best. Your Mac fonts are converted automatically and look best bold and at least half an inch tall.</div>
+    <div id="tlines"></div>
+    <button class="addline" id="addline" type="button">+ Add a line of text</button>
+    <div class="row hidden" id="linegaprow"><label>Space between lines, mm<input type="number" id="linegap" min="0" max="40" step="0.5" value="3"></label></div>
+  </div>
+
+  <div class="step">
+    <h2>2. What are you making?</h2>
+    <div class="seg" id="kind"><button data-v="design" class="on">Design</button><button data-v="patch">Patch</button><button data-v="frame">Frame</button></div>
+    <div class="tip" id="kindtip">Just the stitches, for sweatshirts, bandanas and the like.</div>
+  </div>
+
+  <div class="step" id="sizestep">
+    <h2 id="sizetitle">3. Sizes (longest side)</h2>
+    <div class="chips" id="sizes">
+      <label class="chip"><input type="checkbox" value="1.5"><span>S</span></label>
+      <label class="chip"><input type="checkbox" value="2.5"><span>M</span></label>
+      <label class="chip on"><input type="checkbox" value="3.5" checked><span>L</span></label>
+      <label class="chip"><input type="checkbox" value="5"><span>XL</span></label>
+      <label class="chip"><input type="checkbox" value="7"><span>XXL</span></label>
+    </div>
+    <div class="row"><label>Custom sizes, <span class="u"></span> (optional)<input type="text" id="custom" placeholder="e.g. 3, 4.25, 6"></label></div>
+    <div class="tip" id="sizetip">Add as many as you like, separated by commas.</div>
+  </div>
+  <div class="step hidden" id="psizestep">
+    <h2 id="psizetitle">3. Patch size (longest side)</h2>
+    <div class="row"><label><span id="psizelabel">Size</span>, <span class="u"></span><input type="number" class="len" id="patch_in" step="0.25" placeholder="as small as fits"></label></div>
+    <div class="tip" id="psizetip">Leave empty for the smallest patch that fits.</div>
+  </div>
+
+  <div class="step hidden" id="patchstep">
+    <h2>4. Patch</h2>
+    <div class="shapes" id="shapes"></div>
+    <div class="row"><label>Patch fabric
+      <select id="fabric">
+        <option value="hoop">Twill hooped directly, cut out after</option>
+        <option value="applique">Appliqué: lay fabric on stabilizer, trim before border</option>
+        <option value="stitched">No fabric, stitch the background</option>
+      </select></label>
+      <label id="bgrow" class="hidden" style="flex:0">Background<input type="color" id="bgcolour" value="#2b4a6f"></label></div>
+    <div class="row hidden" id="edgerow1"><label>Appliqué edge<select class="edgesel"><option value="satin">Satin (faux merrow)</option><option value="blanket">Blanket stitch</option></select></label></div>
+  </div>
+
+  <div class="step hidden" id="framestep">
+    <h2>4. Frame</h2>
+    <div class="shapes" id="frames"></div>
+    <details id="shapeframes"><summary>Or turn a patch shape into a frame</summary><div class="shapes" id="frameshapes"></div></details>
+    <h4>Band (between the outer and inner lines)</h4>
+    <div class="seg" id="band"><button data-v="applique" class="on">Appliqué</button><button data-v="fill">Fill</button><button data-v="none">No fill or applique</button></div>
+    <div class="row">
+      <label style="flex:0"><span id="bandcolourlabel">Fabric (preview)</span><input type="color" id="frame_band_colour" value="#c9d8f0"></label>
+      <label>Band width, mm<input type="number" id="frame_band_mm" min="3" max="30" step="0.5" placeholder="auto"></label>
+      <label><span id="innerlabel">Inner line</span>, mm<input type="number" id="frame_inner_mm" min="0.8" max="5" step="0.25" placeholder="auto"></label>
+    </div>
+    <div class="row" id="edgerow2"><label>Appliqué edge<select class="edgesel"><option value="satin">Satin</option><option value="blanket">Blanket stitch</option></select></label></div>
+    <div class="tip" id="bandtip">Band width is the distance between the outer and inner outlines; the inner one is centred exactly inside the outer.</div>
+    <div class="row"><label>Middle of the frame
+      <select id="frame_center"><option value="fabric">Fabric shows</option><option value="fill">Fill stitch around the design</option></select></label>
+      <label id="centrecolw" class="hidden" style="flex:0">Fill<input type="color" id="frame_center_colour" value="#ffffff"></label></div>
+  </div>
+
+  <div class="step hidden" id="edgestep">
+    <h2>Edges</h2>
+    <div class="row">
+      <label>Space round the design, mm<input type="number" id="gap" min="0" max="40" step="0.5" value="1.5"></label>
+      <label>Border width, mm<input type="number" id="border_mm" min="0" max="7" step="0.5" placeholder="auto"></label>
+    </div>
+    <div class="row"><label>Border and outline thread
+      <select id="border_pick"><option value="">Darkest in the design</option><option value="custom">Pick a colour</option></select></label>
+      <label id="bordercolw" class="hidden" style="flex:0">Colour<input type="color" id="bordercolour" value="#151011"></label></div>
+    <div class="tip">Fine stitch widths are always in millimetres. 1.5 mm of space is snug; 4 to 8 mm looks roomy.</div>
+  </div>
+
+  <div class="step">
+    <h2>5. Fabric</h2>
+    <div class="row" style="margin-top:0"><label>Stitching on<select id="material"></select></label></div>
+    <div id="supplies" class="supplies"></div>
+    <label class="check"><input type="checkbox" id="knockdown"><span>Knockdown stitch first<br><span class="small">A very open fill under the design that flattens towel loops and fleece pile.</span></span></label>
+    <div class="row hidden" id="kdrow"><label style="flex:0">Knockdown thread<input type="color" id="knockdown_colour" value="#ffffff"></label><span class="small">Pick a thread that matches your fabric. Until you pick one, StitchKit uses the design's first colour so nothing shows past the edges.</span></div>
+  </div>
+
+  <div class="step">
+    <h2>6. Stitching</h2>
+    <label id="densitywrap">Density
+      <div class="seg" id="density"><button data-v="light">Light</button><button data-v="normal" class="on">Normal</button><button data-v="dense">Dense</button></div>
+    </label>
+    <div class="tip" id="densitytip">Normal is tuned to the usual guide of about 1,500 stitches per covered square inch. Your fabric choice sets this; change it if you like.</div>
+    <div class="row" id="fillrow"><label>Fill stitch
+      <select id="fill_style"><option value="tatami">Straight rows (tatami)</option><option value="contour">Follow the shape (contour)</option><option value="meander">Open texture (meander): fabric shows through</option></select></label></div>
+    <div id="designopts">
+      <label class="check"><input type="checkbox" id="outline"><span>Crisp satin edge around the design<br><span class="small">Cleans up ragged fill edges. Best for solid silhouettes.</span></span></label>
+      <label class="check"><input type="checkbox" id="borders" checked><span>Turn outer border rings in the art into satin</span></label>
+    </div>
+  </div>
+
+  <div class="step">
+    <h2>7. Hooping</h2>
+    <div class="row">
+      <label>Copies in one hooping<input type="number" id="copies" min="1" max="200" step="1" value="1"></label>
+    </div>
+    <div class="tip">More than one: StitchKit picks the smallest hoop that holds them, 10 mm apart, and sews colour by colour (all of colour 1, then all of colour 2…).</div>
+    <label class="check"><input type="checkbox" id="basting"><span>Basting box<br><span class="small">A running-stitch box sewn first to hold fabric and stabilizer together.</span></span></label>
+  </div>
+
+  <div class="step">
+    <h2>8. File types</h2>
+    <div class="chips" id="formats">
+      <label class="chip on"><input type="checkbox" value="vp3" checked>VP3</label>
+      <label class="chip on"><input type="checkbox" value="vip" checked>VIP</label>
+      <label class="chip"><input type="checkbox" value="pes">PES</label>
+      <label class="chip"><input type="checkbox" value="dst">DST</label>
+      <label class="chip"><input type="checkbox" value="jef">JEF</label>
+      <label class="chip"><input type="checkbox" value="exp">EXP</label>
+    </div>
+    <div class="tip">Every piece also gets a thread sheet, a placement template to print, and a Cricut cut file when there is appliqué.</div>
+  </div>
+
+  <button class="go" id="go" disabled>Make stitch files</button>
+  <div class="status" id="status"></div>
+  <div class="bar hidden" id="bar"><i></i></div>
+</section>
+
+<section>
+  <div id="arrange" class="panel hidden">
+    <h2>Arrange</h2>
+    <div class="tip" style="margin-top:0" id="arrtip">Drag each file into place. Arrow keys nudge the selected one (hold Shift for bigger steps).</div>
+    <div id="canvaswrap"><svg id="canvas" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="arrtools">
+      <span class="small" id="selname">Click a file to select it.</span>
+      <button data-a="ch">Centre across</button><button data-a="cv">Centre up/down</button>
+      <label class="small">Size <input type="range" id="arrscale" min="70" max="130" step="1" value="100"> <span id="arrscalev">100%</span></label>
+    </div>
+    <div class="tip">Resizing a stitch file keeps its stitch count, so stay between about 80% and 120%.</div>
+  </div>
+  <div class="toolbar hidden" id="toolbar">
+    <a id="zip" href="#">Download all (.zip)</a>
+    <button id="reveal">Show in Finder</button>
+    <span class="small" id="where"></span>
+  </div>
+  <div id="results" class="results"></div>
+  <div class="empty" id="empty">Your stitch previews will show up here.</div>
+</section>
+</main>
+
+<div class="modal hidden" id="modal"><div class="box" id="modalbox"></div></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+let upload = null, job = null, SET = {units:'in', margin_mm:8, hoop:'small', ask_hoop:true, hoops:[]}, lastBody = null;
+let ITEMS = [], SEL = -1, OUTLINE = null;
+const SIZE_NAMES = {'1.5':'S','2.5':'M','3.5':'L','5':'XL','7':'XXL'};
+
+// ---------------------------------------------------------------- units
+let U = 'in';
+const fmt = mm => U === 'mm' ? Math.round(mm) + ' mm' : (mm / 25.4).toFixed(2) + '"';
+const fmtWH = (w, h) => U === 'mm' ? `${Math.round(w)} × ${Math.round(h)} mm` : `${(w/25.4).toFixed(2)}" × ${(h/25.4).toFixed(2)}"`;
+function lenIn(el){ const v = parseFloat(el.value); if (isNaN(v)) return ''; return U === 'mm' ? v / 25.4 : v; }
+function setLen(el, inches){ if (inches === '' || inches == null || isNaN(inches)) { el.value = ''; return; }
+  el.value = U === 'mm' ? Math.round(inches * 25.4 * 2) / 2 : Math.round(inches * 100) / 100; }
+function setUnits(u, save){
+  const vals = $$('.len').map(el => [el, lenIn(el)]);
+  const cust = parseCustom();
+  U = u;
+  vals.forEach(([el, v]) => { setLen(el, v); el.step = U === 'mm' ? 1 : 0.05; });
+  $('#custom').value = cust.map(v => U === 'mm' ? Math.round(v * 25.4) : +v.toFixed(2)).join(', ');
+  $$('.u').forEach(s => s.textContent = U === 'mm' ? 'mm' : 'inches');
+  $$('#units button').forEach(b => b.classList.toggle('on', b.dataset.u === U));
+  $$('#sizes input').forEach(i => i.nextElementSibling.textContent = SIZE_NAMES[i.value] + ' ' + (U === 'mm' ? Math.round(i.value * 25.4) + ' mm' : i.value + '"'));
+  if (save) saveSettings({units: U});
+  if (job) poll(true);
+  drawCanvas();
+}
+function parseCustom(){
+  return String($('#custom').value).split(/[,\s]+/).map(x => parseFloat(x.replace('"',''))).filter(v => !isNaN(v) && v > 0)
+    .map(v => U === 'mm' ? v / 25.4 : v);
+}
+$('#units').onclick = e => { if (e.target.dataset.u) setUnits(e.target.dataset.u, true); };
+
+// ---------------------------------------------------------------- segs and chips
+function seg(id){
+  const el = $(id);
+  el.addEventListener('click', e => {
+    if (e.target.tagName !== 'BUTTON' || e.target.disabled) return;
+    el.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === e.target));
+    el.dispatchEvent(new Event('change'));
+  });
+  const get = () => el.querySelector('.on').dataset.v;
+  get.set = v => { const b = el.querySelector(`[data-v="${v}"]`); if (b) { el.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); el.dispatchEvent(new Event('change')); } };
+  return get;
+}
+const source = seg('#source'), kind = seg('#kind'), density = seg('#density'), band = seg('#band');
+$$('.chip input').forEach(i => i.addEventListener('change', () => i.parentElement.classList.toggle('on', i.checked)));
+$('#fabric').addEventListener('change', refresh);
+$('#border_pick').addEventListener('change', () => $('#bordercolw').classList.toggle('hidden', $('#border_pick').value !== 'custom'));
+$('#frame_center').addEventListener('change', () => $('#centrecolw').classList.toggle('hidden', $('#frame_center').value !== 'fill'));
+$('#band').addEventListener('change', () => { refresh();
+  $('#bandcolourlabel').textContent = band() === 'fill' ? 'Fill colour' : 'Fabric (preview)';
+  $('#bandcolourlabel').parentElement.classList.toggle('hidden', band() === 'none');
+});
+
+// ---------------------------------------------------------------- shapes and frames
+let SHAPE = 'outline', FRAME = 'notched', FRAMEKIND = {};
+const blob = 'M10,30 C4,18 14,6 24,9 C34,4 42,14 36,24 C42,34 30,42 22,36 C14,42 6,38 10,30 Z';
+function tile(k, label, d, on){ return `<div class="shp${on?' on':''}" data-k="${k}"><svg viewBox="0 0 44 44"><path d="${d}"/></svg>${label}</div>`; }
+function pickIn(box, k){ box.querySelectorAll('.shp').forEach(x => x.classList.toggle('on', x.dataset.k === k)); }
+fetch('/api/shapes').then(r => r.json()).then(list => {
+  $('#shapes').innerHTML = tile('outline', 'Follow design', blob, true) + list.map(s => tile(s.key, s.label, s.d)).join('');
+  $('#frameshapes').innerHTML = list.map(s => tile('shape:' + s.key, s.label, s.d)).join('');
+});
+function loadFrames(){
+  return fetch('/api/frames').then(r => r.json()).then(list => {
+    list.forEach(f => FRAMEKIND[f.key] = f.kind);
+    $('#frames').innerHTML = list.map(f => tile(f.key, f.label + (f.user ? ' (yours)' : ''), f.d, f.key === FRAME)).join('');
+  });
+}
+loadFrames();
+$('#shapes').onclick = e => { const t = e.target.closest('.shp'); if (!t) return; SHAPE = t.dataset.k; pickIn($('#shapes'), SHAPE); outlineChanged(); };
+$('#frames').onclick = e => { const t = e.target.closest('.shp'); if (!t) return; setFrame(t.dataset.k); };
+$('#frameshapes').onclick = e => { const t = e.target.closest('.shp'); if (!t) return; setFrame(t.dataset.k); };
+function setFrame(k){
+  FRAME = k; pickIn($('#frames'), k); pickIn($('#frameshapes'), k);
+  const pieces = FRAMEKIND[k] === 'pieces';
+  $('#innerlabel').textContent = pieces ? 'Piece outline' : 'Inner line';
+  $('#frame_band_mm').closest('label').classList.toggle('hidden', pieces);
+  $('#bandtip').textContent = pieces ? 'Each piece is outlined in satin; the inside of each piece is appliqué, fill, or left plain.'
+    : 'Band width is the distance between the outer and inner outlines; the inner one is centred exactly inside the outer.';
+  outlineChanged();
+}
+
+// ---------------------------------------------------------------- fonts and text lines
+let FONTS = {emb: [], sys: []}, nline = 0;
+function fontOptions(){
+  const emb = FONTS.emb.map(f => `<option value="${f.id}">${f.name} (${f.style}, ${U==='mm' ? Math.round(f.min_in*25.4)+'–'+Math.round(f.max_in*25.4)+' mm' : f.min_in+'–'+f.max_in+'"'})</option>`).join('');
+  const sys = FONTS.sys.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+  return `<optgroup label="Embroidery fonts (stitch best)">${emb}</optgroup>` + (sys ? `<optgroup label="Your Mac fonts">${sys}</optgroup>` : '');
+}
+const fontsReady = fetch('/api/fonts').then(r => r.json()).then(f => {
+  FONTS = f; $('#m_font').innerHTML = fontOptions();
+  const fav = FONTS.emb.find(x => /barstitch bold/i.test(x.name)); if (fav) $('#m_font').value = fav.id;
+});
+function addLine(l){
+  l = l || {};
+  const i = nline++;
+  const d = document.createElement('div');
+  d.className = 'tline'; d.dataset.i = i;
+  d.innerHTML = `<button class="x" type="button" title="Remove">×</button>
+    <input type="text" class="tt" placeholder="Type your words">
+    <div class="row"><label>Font<select class="font">${fontOptions()}</select></label></div>
+    <div class="fprev"></div>
+    <div class="row">
+      <label>Letter height, <span class="u">${U==='mm'?'mm':'inches'}</span><input type="number" class="h len" step="${U==='mm'?1:0.05}"></label>
+      <label>Letter spacing, mm<input type="number" class="sp" min="-5" max="20" step="0.5" value="0"></label>
+    </div>
+    <div class="row"><label style="flex:1">Arch <span class="small av">straight</span>
+      <div class="arch"><span class="small">smile</span><input type="range" class="ar" min="-100" max="100" step="5" value="0"><span class="small">rainbow</span></div></label></div>
+    <div class="row"><label style="flex:0">Thread<input type="color" class="col" value="#151011"></label>
+      <label class="posw">Position<select class="pos"><option value="above">Above the artwork</option><option value="below">Below the artwork</option></select></label></div>`;
+  $('#tlines').appendChild(d);
+  const sel = d.querySelector('.font');
+  const fav = FONTS.emb.find(f => /barstitch bold/i.test(f.name)); if (fav) sel.value = fav.id;
+  setLen(d.querySelector('.h'), l.height_in || 0.5);
+  if (l.text) d.querySelector('.tt').value = l.text;
+  if (l.font) sel.value = l.font;
+  if (l.spacing_mm != null) d.querySelector('.sp').value = l.spacing_mm;
+  if (l.colour) d.querySelector('.col').value = l.colour;
+  if (l.position) d.querySelector('.pos').value = l.position;
+  const ar = d.querySelector('.ar');
+  const showArch = () => { const v = +ar.value; d.querySelector('.av').textContent = v === 0 ? 'straight' : (v > 0 ? 'rainbow ' + v + '%' : 'smile ' + (-v) + '%'); };
+  if (l.arch != null) ar.value = l.arch;
+  showArch(); ar.oninput = showArch;
+  const upd = () => preview(d);
+  sel.onchange = upd; d.querySelector('.tt').oninput = () => { upd(); refresh(); };
+  d.querySelector('.x').onclick = () => { d.remove(); refresh(); };
+  upd(); refresh();
+  if (!l.text) d.querySelector('.tt').focus();
+}
+function preview(d){
+  const id = d.querySelector('.font').value, p = d.querySelector('.fprev');
+  const t = d.querySelector('.tt').value || 'Your words';
+  if (id.startsWith('emb:')) { p.innerHTML = `<img alt="font sample" src="/api/fontpreview?id=${encodeURIComponent(id)}">`; p.style.fontFamily=''; return; }
+  const fam = 'f' + d.dataset.i + Math.random().toString(36).slice(2,6);
+  const st = document.createElement('style');
+  st.textContent = `@font-face{font-family:${fam};src:url('/api/fontfile?id=${encodeURIComponent(id)}')}`;
+  document.head.appendChild(st);
+  p.style.fontFamily = fam + ', sans-serif'; p.textContent = t;
+}
+$('#addline').onclick = () => addLine();
+function textLines(all){
+  return $$('.tline').map(d => ({
+    text: d.querySelector('.tt').value, font: d.querySelector('.font').value,
+    height_in: lenIn(d.querySelector('.h')) || 0.5, spacing_mm: d.querySelector('.sp').value,
+    arch: d.querySelector('.ar').value, colour: d.querySelector('.col').value,
+    position: d.querySelector('.pos').value })).filter(l => all || l.text.trim());
+}
+
+// ---------------------------------------------------------------- fabric and supplies
+let MAT_TOUCHED = false;
+function fillMaterials(){
+  const f = SET.fabrics || {};
+  $('#material').innerHTML = Object.entries(f).map(([k, v]) => `<option value="${k}">${v.name}</option>`).join('');
+  $('#material').value = kind() === 'design' ? 'fleece' : 'twill';
+  applyMaterial(false);
+}
+function edgeStyle(){ const v = [...document.querySelectorAll('.edgesel')].find(x => x.offsetParent !== null); return v ? v.value : 'satin'; }
+$$('.edgesel').forEach(sel => sel.addEventListener('change', () => { $$('.edgesel').forEach(o => o.value = sel.value); showSupplies(); }));
+function applyMaterial(fromUser){
+  const f = (SET.fabrics || {})[$('#material').value]; if (!f) return;
+  density.set(f.density);
+  $('#knockdown').checked = !!f.knockdown;
+  $('#kdrow').classList.toggle('hidden', !$('#knockdown').checked);
+  if (fromUser) MAT_TOUCHED = true;
+  showSupplies();
+}
+$('#material').addEventListener('change', () => applyMaterial(true));
+$('#knockdown').addEventListener('change', () => $('#kdrow').classList.toggle('hidden', !$('#knockdown').checked));
+$('#knockdown_colour').addEventListener('input', () => $('#knockdown_colour').dataset.touched = 1);
+function showSupplies(){
+  const f = (SET.fabrics || {})[$('#material').value]; if (!f) { $('#supplies').innerHTML = ''; return; }
+  const k = kind();
+  const stitchedBg = k === 'patch' && $('#fabric').value === 'stitched';
+  const appli = (k === 'patch' && $('#fabric').value === 'applique') || (k === 'frame' && band() === 'applique');
+  let top = f.topping;
+  if (k !== 'design' && /^none/i.test(top)) top = 'Light water-soluble topping keeps satin edges crisp';
+  const rows = [['Needle', f.needle], ['Stabilizer', stitchedBg ? 'Heavy water-soluble film (such as Badgemaster), one or two layers. Trim, then rinse; leave a little in for a stiffer patch' : f.stabilizer],
+                ['Topping', top]];
+  if (appli) rows.push(['Appliqué', 'HeatnBond Lite (or another light fusible) on the back of the appliqué fabric before cutting']);
+  if (f.extras) rows.push(['Also', f.extras]);
+  $('#supplies').innerHTML = rows.map(([a, b]) => `<b>${a}</b><span>${b}</span>`).join('');
+}
+['#fabric'].forEach(x => $(x).addEventListener('change', showSupplies));
+$('#band').addEventListener('change', showSupplies);
+
+// ---------------------------------------------------------------- recent files and VectorCraft
+async function loadRecent(){
+  const r = await fetch('/api/recent'); if (!r.ok) return;
+  const list = (await r.json()).slice(0, 6);
+  $('#recentbox').classList.toggle('hidden', !list.length || !!upload);
+  $('#recent').innerHTML = list.map(x => `<div><span><a href="#" data-rec="${x.id}">${x.filename || x.name}</a></span><span class="small" style="flex:none">${x.when}</span></div>`).join('');
+}
+$('#recent').addEventListener('click', async e => {
+  const id = e.target.dataset.rec; if (!id) return; e.preventDefault();
+  const r = await fetch('/api/recent/open', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
+  const j = await r.json(); if (!r.ok) return status(j.error, true);
+  if (source() === 'arrange' && j.stitch) { ITEMS.push({id: j.id, name: j.filename, w: j.w_mm, h: j.h_mm, x: 0, y: 0, scale: 1}); SEL = ITEMS.length - 1; listFiles(); refresh(); return; }
+  source.set(j.stitch ? 'stitch' : 'art');
+  upload = j; $('#name').value = j.name; $('#name').dataset.touched = '';
+  $('#bitmapopts').classList.toggle('hidden', !j.bitmap);
+  refresh(); inspect();
+});
+$('#vcopen').onclick = async () => {
+  const r = await fetch('/api/vectorcraft/open', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id: upload.id})});
+  const j = await r.json();
+  status(r.ok ? 'Opened in VectorCraft. Save there (File > Save, same file), then click "Reload after saving".' : j.error, !r.ok);
+};
+$('#vcreload').onclick = async () => {
+  const r = await fetch('/api/vectorcraft/reload', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id: upload.id})});
+  const j = await r.json(); if (!r.ok) return status(j.error, true);
+  if (!j.changed) status('No changes saved yet in VectorCraft. Save the file there first.');
+  upload.ready = false; inspect();
+};
+
+// ---------------------------------------------------------------- what to show
+const KIND_TIPS = {
+  design: 'Just the stitches, for sweatshirts, bandanas and the like.',
+  patch: 'Your design on a patch with a faux-merrow satin border.',
+  frame: 'A decorative frame round your design: appliqué, fill, or just the outlines.'
+};
+function refresh(){
+  const src = source(), k = kind();
+  const hasText = textLines().length > 0;
+  $('#filebox').classList.toggle('hidden', !['art','stitch','arrange'].includes(src));
+  $('#file').multiple = src === 'arrange';
+  $('#textstep').classList.toggle('hidden', !['art','stitch','text'].includes(src));
+  $('#textopt').textContent = src === 'text' ? '' : '(optional)';
+  $('#monobox').classList.toggle('hidden', src !== 'monogram');
+  $('#arrfiles').classList.toggle('hidden', src !== 'arrange');
+  $('#arrange').classList.toggle('hidden', src !== 'arrange');
+  $('#artinfo').classList.toggle('hidden', !(upload && ['art','stitch'].includes(src)));
+  $('#droptitle').textContent = src === 'art' ? 'Drop an SVG, PNG or JPG here' : (src === 'stitch' ? 'Drop a stitch file here' : 'Drop stitch files here');
+  $('#dropsub').textContent = src === 'art' ? 'or click to choose' : (src === 'stitch' ? 'VP3, PES, DST, JEF, EXP, HUS or VIP' : 'monogram letters, motifs… you can add several');
+  if (upload && !((src === 'art' && !upload.stitch) || (src === 'stitch' && upload.stitch))) upload = null;
+  if (upload && ['art','stitch'].includes(src)) $('#droptitle').textContent = upload.filename;
+  $$('.posw').forEach(x => x.classList.toggle('hidden', !['art','stitch'].includes(src)));
+  $('#linegaprow').classList.toggle('hidden', $$('.tline').length < 2 && !(upload && $$('.tline').length));
+  const artSizes = src === 'art';
+  $('#sizestep').classList.toggle('hidden', !artSizes);
+  $('#sizetitle').textContent = hasText ? '3. Artwork sizes' : (k === 'design' ? '3. Sizes (longest side)' : (k === 'patch' ? '3. Patch sizes (longest side)' : '3. Frame sizes (longest side)'));
+  $('#sizetip').textContent = hasText ? 'The artwork itself at each size; text keeps its letter height.' :
+     (k === 'design' ? 'Add as many as you like, separated by commas.' : 'The whole piece, border included. Add as many as you like.');
+  const psize = k !== 'design' && (!artSizes || hasText);
+  $('#psizestep').classList.toggle('hidden', !psize);
+  $('#psizetitle').textContent = '3. ' + (k === 'frame' ? 'Frame' : 'Patch') + ' size (longest side)';
+  $('#psizelabel').textContent = k === 'frame' ? 'Frame size' : 'Patch size';
+  $('#patch_in').placeholder = src === 'arrange' ? 'needed' : 'as small as fits';
+  $('#psizetip').textContent = src === 'arrange' ? 'The frame or patch is made at this size (at least ' + (U === 'mm' ? '19 mm' : '0.75"') + '); arrange your files inside it.' : 'Leave empty for the smallest that fits.';
+  $('#patchstep').classList.toggle('hidden', k !== 'patch');
+  $('#framestep').classList.toggle('hidden', k !== 'frame');
+  $('#edgestep').classList.toggle('hidden', k === 'design');
+  $('#bgrow').classList.toggle('hidden', $('#fabric').value !== 'stitched');
+  $('#kindtip').textContent = KIND_TIPS[k];
+  $('#edgerow1').classList.toggle('hidden', !(k === 'patch' && $('#fabric').value === 'applique'));
+  $('#edgerow2').classList.toggle('hidden', !(k === 'frame' && band() === 'applique'));
+  $('#fillrow').classList.toggle('hidden', src !== 'art');
+  $('#vcrow').classList.toggle('hidden', !(SET.vectorcraft && upload && !upload.stitch && /\.svg$/i.test(upload.filename || '')));
+  $('#recentbox').classList.toggle('hidden', !!upload || !['art','stitch','arrange'].includes(src) || !$('#recent').children.length);
+  if (!MAT_TOUCHED && SET.fabrics) { const want = k === 'design' ? 'fleece' : 'twill'; if ($('#material').value !== want) { $('#material').value = want; applyMaterial(false); } }
+  showSupplies();
+  const stitchOnly = src === 'stitch' && !hasText || src === 'arrange';
+  $('#densitywrap').classList.toggle('hidden', stitchOnly && k === 'design');
+  $('#densitytip').classList.toggle('hidden', stitchOnly && k === 'design');
+  $('#designopts').classList.toggle('hidden', !(src === 'art' && k === 'design'));
+  let ready = false;
+  if (src === 'art' || src === 'stitch') ready = !!(upload && upload.ready);
+  else if (src === 'text') ready = hasText;
+  else if (src === 'monogram') ready = !!($('#m_first').value + $('#m_middle').value + $('#m_last').value).trim();
+  else ready = ITEMS.length > 0 && (k === 'design' || lenIn($('#patch_in')) >= 0.75);
+  $('#go').disabled = !ready || (job && !jobDone);
+  if (!$('#name').value && src === 'text' && hasText) $('#name').value = textLines()[0].text.replace(/[^A-Za-z0-9]+/g, '_').slice(0, 30);
+  if (src === 'arrange') drawCanvas();
+}
+['#source', '#kind'].forEach(s => $(s).addEventListener('change', () => { refresh(); outlineChanged(); }));
+['#m_first','#m_middle','#m_last'].forEach(s => $(s).addEventListener('input', () => {
+  $(s).value = $(s).value.toUpperCase(); refresh();
+  if (!$('#name').dataset.touched) $('#name').value = 'Monogram_' + ($('#m_first').value + $('#m_middle').value + $('#m_last').value);
+}));
+$('#name').addEventListener('input', () => $('#name').dataset.touched = 1);
+$('#patch_in').addEventListener('input', () => { refresh(); outlineChanged(); });
+['#gap','#border_mm','#frame_band_mm','#frame_inner_mm'].forEach(s => $(s).addEventListener('change', outlineChanged));
+
+// ---------------------------------------------------------------- files
+const drop = $('#drop');
+drop.onclick = () => { $('#file').multiple = source() === 'arrange';
+  $('#file').accept = source() === 'art' ? '.svg,.png,.jpg,.jpeg,.webp,.bmp,.gif,.tif,.tiff' : '.vp3,.pes,.pec,.dst,.jef,.exp,.hus,.vip,.xxx,.sew'; $('#file').click(); };
+drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = () => drop.classList.remove('over');
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); handleFiles([...e.dataTransfer.files]); };
+$('#file').onchange = () => { handleFiles([...$('#file').files]); $('#file').value = ''; };
+$('#colours').onchange = inspect;
+async function handleFiles(fs){
+  if (!fs.length) return;
+  if (source() === 'arrange') { for (const f of fs) await addArrangeFile(f); return; }
+  send(fs[0]);
+}
+async function uploadFile(f){
+  const fd = new FormData(); fd.append('file', f);
+  const r = await fetch('/api/upload', {method:'POST', body:fd}); const j = await r.json();
+  if (!r.ok) { status(j.error, true); return null; }
+  return j;
+}
+async function send(f){
+  status('Reading ' + f.name + '…');
+  const j = await uploadFile(f); if (!j) return;
+  if (j.stitch && source() === 'art') source.set('stitch');
+  if (!j.stitch && source() === 'stitch') source.set('art');
+  upload = j;
+  $('#name').value = j.name; $('#name').dataset.touched = '';
+  $('#bitmapopts').classList.toggle('hidden', !j.bitmap);
+  refresh();
+  inspect();
+}
+async function inspect(){
+  if (!upload) return;
+  if (upload.stitch){
+    $('#swatches').innerHTML = `<span class="small" style="width:100%">Existing design: ${fmtWH(upload.w_mm, upload.h_mm)}, ${upload.stitches.toLocaleString()} stitches. Its stitches stay exactly as they are.</span>` +
+      upload.colours.map((c,i) => `<span class="sw"><i style="background:${c}"></i>${i+1}</span>`).join('');
+    $('#artnotes').textContent = ''; $('#reducedwrap').classList.add('hidden'); status(''); upload.ready = true; refresh(); return;
+  }
+  status(upload.bitmap ? 'Tracing the picture…' : 'Reading colours…');
+  $('#go').disabled = true;
+  const r = await fetch('/api/inspect', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({id: upload.id, colours: $('#colours').value})});
+  const j = await r.json();
+  if (!r.ok) return status(j.error, true);
+  $('#swatches').innerHTML = '<span class="small" style="width:100%">Stitch order:</span>' +
+    j.colours.map((c,i) => `<span class="sw"><i style="background:${c.hex}"></i>${i+1}. ${c.hex}</span>`).join('');
+  $('#artnotes').textContent = (j.notes || []).join(' ');
+  $('#reducedwrap').classList.toggle('hidden', !j.reduced);
+  if (j.reduced) $('#reduced').src = j.reduced;
+  status('');
+  upload.ready = true; refresh();
+}
+
+// ---------------------------------------------------------------- arrange
+async function addArrangeFile(f){
+  status('Reading ' + f.name + '…');
+  const j = await uploadFile(f); if (!j) return;
+  if (!j.stitch) return status('Arrange works with stitch files (VP3, PES, DST, JEF…).', true);
+  const n = ITEMS.length;
+  ITEMS.push({id: j.id, name: j.filename, w: j.w_mm, h: j.h_mm, x: (n - 1) * (j.w_mm + 4) * (n % 2 ? 1 : 0), y: 0, scale: 1});
+  if (!$('#name').value) $('#name').value = j.name;
+  status(''); SEL = ITEMS.length - 1; listFiles(); refresh();
+}
+function listFiles(){
+  $('#arrfiles').innerHTML = ITEMS.map((it, i) => `<div><span>${i+1}. ${it.name}</span><span class="small" style="flex:none">${fmtWH(it.w*it.scale, it.h*it.scale)}</span><button class="x" data-i="${i}" title="Remove">×</button></div>`).join('');
+}
+$('#arrfiles').onclick = e => { const i = e.target.dataset.i; if (i == null) return; ITEMS.splice(+i, 1); SEL = -1; listFiles(); refresh(); };
+let outlineTimer = null;
+function outlineChanged(){
+  if (source() !== 'arrange') return;
+  clearTimeout(outlineTimer);
+  outlineTimer = setTimeout(async () => {
+    if (kind() === 'design' || !(lenIn($('#patch_in')) > 0)) { OUTLINE = null; drawCanvas(); return; }
+    const r = await fetch('/api/frameoutline', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(formBody())});
+    OUTLINE = r.ok ? await r.json() : null; drawCanvas();
+  }, 250);
+}
+function hoopFor(){ return SET.hoops.find(h => h.key === SET.hoop) || {w:120, h:120, name:'120 x 120 mm'}; }
+function drawCanvas(){
+  const svg = $('#canvas'); if (source() !== 'arrange') return;
+  let hw, hh;
+  if (OUTLINE) { const b = OUTLINE.bounds; hw = Math.max(-b[0], b[2]) + 12; hh = Math.max(-b[1], b[3]) + 12; }
+  else { const hp = hoopFor(); hw = hp.w / 2 + 4; hh = hp.h / 2 + 4; }
+  ITEMS.forEach(it => { hw = Math.max(hw, Math.abs(it.x) + it.w * it.scale / 2 + 6); hh = Math.max(hh, Math.abs(it.y) + it.h * it.scale / 2 + 6); });
+  svg.setAttribute('viewBox', `${-hw} ${-hh} ${2*hw} ${2*hh}`);
+  let s = '';
+  if (OUTLINE) {
+    s += `<path d="${OUTLINE.outer} ${OUTLINE.inner}" fill="${band() === 'applique' ? $('#frame_band_colour').value : (band() === 'fill' && kind()==='frame' ? $('#frame_band_colour').value : '#ffffff22')}" fill-rule="evenodd" fill-opacity=".8" stroke="#222" stroke-width=".8"/>`;
+    (OUTLINE.pieces || []).forEach(p => s += `<path d="${p}" fill="none" stroke="#222" stroke-width=".6"/>`);
+    if (OUTLINE.inner) s += `<path d="${OUTLINE.inner}" fill="none" stroke="#fff" stroke-dasharray="2 2" stroke-width=".5"/>`;
+  } else {
+    const hp = hoopFor(), m = SET.margin_mm;
+    s += `<rect x="${-hp.w/2}" y="${-hp.h/2}" width="${hp.w}" height="${hp.h}" fill="none" stroke="#fff" stroke-width=".6"/>`;
+    s += `<rect x="${-hp.w/2+m}" y="${-hp.h/2+m}" width="${hp.w-2*m}" height="${hp.h-2*m}" fill="none" stroke="#fff" stroke-dasharray="3 2" stroke-width=".5"/>`;
+    s += `<text x="${-hp.w/2+2}" y="${-hp.h/2-1.5}" font-size="4" fill="#fff">${hp.name} hoop</text>`;
+  }
+  s += `<line x1="${-hw}" y1="0" x2="${hw}" y2="0" stroke="#fff6" stroke-width=".3"/><line x1="0" y1="${-hh}" x2="0" y2="${hh}" stroke="#fff6" stroke-width=".3"/>`;
+  ITEMS.forEach((it, i) => {
+    const w = it.w * it.scale, h = it.h * it.scale;
+    s += `<g class="item" data-i="${i}"><image href="/api/stitchpreview?id=${it.id}" x="${it.x - w/2}" y="${it.y - h/2}" width="${w}" height="${h}" preserveAspectRatio="none"/>` +
+         `<rect x="${it.x - w/2}" y="${it.y - h/2}" width="${w}" height="${h}" fill="transparent" stroke="${i === SEL ? '#ffd166' : '#ffffff55'}" stroke-width="${i === SEL ? .8 : .4}" stroke-dasharray="${i === SEL ? '' : '1.5 1.5'}"/></g>`;
+  });
+  svg.innerHTML = s;
+  const it = ITEMS[SEL];
+  $('#selname').textContent = it ? `${SEL+1}. ${it.name} at ${U==='mm' ? it.x.toFixed(1)+', '+it.y.toFixed(1)+' mm' : (it.x/25.4).toFixed(2)+'", '+(it.y/25.4).toFixed(2)+'"'} from the centre` : 'Click a file to select it.';
+  $('#arrscale').value = it ? Math.round(it.scale * 100) : 100; $('#arrscalev').textContent = $('#arrscale').value + '%';
+}
+(() => {
+  const svg = $('#canvas'); let drag = null;
+  const pt = e => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+  svg.addEventListener('pointerdown', e => {
+    const g = e.target.closest('.item'); if (!g) { SEL = -1; drawCanvas(); return; }
+    SEL = +g.dataset.i; const p = pt(e); drag = {dx: p.x - ITEMS[SEL].x, dy: p.y - ITEMS[SEL].y};
+    svg.setPointerCapture(e.pointerId); drawCanvas();
+  });
+  svg.addEventListener('pointermove', e => { if (!drag || SEL < 0) return; const p = pt(e);
+    ITEMS[SEL].x = Math.round((p.x - drag.dx) * 2) / 2; ITEMS[SEL].y = Math.round((p.y - drag.dy) * 2) / 2; drawCanvas(); });
+  svg.addEventListener('pointerup', () => { drag = null; });
+  document.addEventListener('keydown', e => {
+    if (source() !== 'arrange' || SEL < 0 || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    const d = e.shiftKey ? 2 : 0.5, k = {ArrowLeft:[-d,0], ArrowRight:[d,0], ArrowUp:[0,-d], ArrowDown:[0,d]}[e.key];
+    if (!k) return; e.preventDefault(); ITEMS[SEL].x += k[0]; ITEMS[SEL].y += k[1]; drawCanvas();
+  });
+  $$('.arrtools button').forEach(b => b.onclick = () => { if (SEL < 0) return;
+    if (b.dataset.a === 'ch') ITEMS[SEL].x = 0; else ITEMS[SEL].y = 0; drawCanvas(); });
+  $('#arrscale').oninput = () => { if (SEL < 0) return; ITEMS[SEL].scale = $('#arrscale').value / 100; listFiles(); drawCanvas(); };
+})();
+
+// ---------------------------------------------------------------- go
+function formBody(){
+  const sizes = $$('#sizes input:checked').map(i => +i.value);
+  return {
+    source: source(), kind: kind(),
+    id: upload ? upload.id : null, lines: ['art','stitch','text'].includes(source()) ? textLines() : [],
+    line_gap_mm: $('#linegap').value, name: $('#name').value, colours: $('#colours').value,
+    sizes, custom: parseCustom().map(v => v.toFixed(3)).join(','), formats: $$('#formats input:checked').map(i => i.value),
+    gap_mm: $('#gap').value, patch_in: lenIn($('#patch_in')),
+    density: density(), satin_outline: $('#outline').checked, detect_borders: $('#borders').checked,
+    shape: SHAPE, fabric: $('#fabric').value, background_colour: $('#bgcolour').value,
+    frame_key: FRAME, frame_band: band(), frame_band_colour: $('#frame_band_colour').value,
+    frame_center: $('#frame_center').value, frame_center_colour: $('#frame_center_colour').value,
+    frame_band_mm: $('#frame_band_mm').value, frame_inner_mm: $('#frame_inner_mm').value,
+    border_mm: $('#border_mm').value, border_colour: $('#border_pick').value === 'custom' ? $('#bordercolour').value : '',
+    copies: $('#copies').value, basting: $('#basting').checked,
+    material: $('#material').value, knockdown: $('#knockdown').checked ? 'on' : 'off', knockdown_colour: $('#knockdown_colour').dataset.touched ? $('#knockdown_colour').value : '',
+    edge_style: edgeStyle(), fill_style: $('#fill_style').value,
+    monogram: {first: $('#m_first').value, middle: $('#m_middle').value, last: $('#m_last').value, layout: $('#m_layout').value,
+               font: $('#m_font').value, height_in: lenIn($('#m_height')), spacing_mm: $('#m_spacing').value, colour: $('#m_colour').value},
+    items: ITEMS.map(it => ({id: it.id, x: it.x, y: it.y, scale: it.scale}))
+  };
+}
+let jobDone = true;
+async function startJob(body){
+  lastBody = body;
+  const r = await fetch('/api/start', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+  const j = await r.json();
+  if (!r.ok) return status(j.error, true);
+  job = j.job; jobDone = false; $('#go').disabled = true; $('#results').innerHTML = ''; $('#toolbar').classList.add('hidden');
+  $('#empty').classList.add('hidden'); $('#bar').classList.remove('hidden');
+  poll();
+}
+$('#go').onclick = () => startJob(formBody());
+
+let RESULTS = [];
+async function poll(once){
+  if (!job) return;
+  const r = await fetch('/api/job/' + job); const j = await r.json();
+  RESULTS = j.results;
+  showResults();
+  if (once) return;
+  status(j.status === 'finished' ? 'Done.' : j.status.charAt(0).toUpperCase() + j.status.slice(1) + '…');
+  $('#bar i').style.width = (100 * j.done / j.total) + '%';
+  if (j.status === 'failed'){ jobDone = true; refresh(); $('#bar').classList.add('hidden'); return status('Something went wrong: ' + j.error, true); }
+  if (j.status !== 'finished') return setTimeout(poll, 1200);
+  jobDone = true; refresh(); $('#bar').classList.add('hidden');
+  $('#toolbar').classList.remove('hidden');
+  $('#zip').href = '/api/job/' + job + '/zip';
+  $('#where').textContent = 'Saved in ' + j.out.replace(/^.*\/Documents\//, 'Documents/');
+  hoopCheck();
+}
+function fileLabel(f){
+  if (f.endsWith('_thread_sheet.html')) return 'Thread sheet';
+  if (f.endsWith('_template.pdf')) return 'Placement template';
+  if (/_cricut(_mat\d+)?\.svg$/.test(f)) return 'Cricut' + (f.match(/_mat(\d+)/) ? ' mat ' + f.match(/_mat(\d+)/)[1] : '');
+  return f.split('.').pop().toUpperCase();
+}
+function showResults(){
+  $('#results').innerHTML = RESULTS.map((r, ri) => {
+    const blocks = r.blocks.map((b, i) => {
+      const m = b.match;
+      const prevSame = i && r.blocks[i-1].colour === b.colour;
+      return `<div><span class="n">${i+1}</span><span class="sw"><i style="background:${b.colour}"></i></span>
+        <span>${m ? `<b>${m.number}</b> ${m.name}` : b.colour}<br><span class="small">${b.steps.join(', ')} · ${b.stitches.toLocaleString()}</span></span>
+        ${prevSame ? '<span class="stop">stop first</span>' : ''}</div>`; }).join('');
+    const steps = r.steps.map(s => `<label><input type="checkbox" data-i="${s.i}" ${s.stop || s.auto_stop ? 'checked' : ''} ${s.auto_stop ? 'disabled' : ''}>
+        <span class="sw"><i style="background:${s.colour}"></i></span><span>${s.i+1}. ${s.label} <span class="small">${s.stitches.toLocaleString()}</span>
+        ${s.auto_stop ? '<span class="lock">stops here</span>' : ''}</span></label>`).join('');
+    const mins = r.minutes, t = mins < 60 ? mins + ' min' : Math.floor(mins/60) + ' h ' + (mins%60) + ' min';
+    const cap = r.capacity ? Object.entries(r.capacity).map(([k, n]) => `${(SET.hoops.find(h => h.key===k)||{name:k}).name.replace(' mm','')}: ${n}`).join(' · ') : '';
+    return `<div class="card">
+      <div class="img"><img src="/api/job/${job}/file/${r.preview}?t=${Date.now()}" alt="${r.base} preview"></div>
+      <div class="meta">
+        <h3>${r.label} · ${fmtWH(r.w_mm, r.h_mm)}</h3>
+        <div class="small">${r.stats.stitches.toLocaleString()} stitches · ${r.blocks.length} thread block${r.blocks.length>1?'s':''} · about ${t}</div>
+        <div class="hoopline">Hoop: <b>${r.hoop}</b>${r.copies > 1 ? ` · ${r.copies} copies` : ''}</div>
+        ${r.copies <= 1 && cap ? `<div class="small">Copies that fit: ${cap}</div>` : ''}
+        ${r.report ? `<div class="rep ${r.report.verdict}">${r.report.per_sq_in.toLocaleString()} stitches per covered sq in (guide about 1,500). ${r.report.text}</div>` : ''}
+        <div class="blocks">${blocks}</div>
+        <details><summary>Stitch order and stops</summary>
+          <div class="stepl" data-r="${ri}">${steps}</div>
+          <div class="small">Tick "stop after" on any step: your machine pauses there. Steps that already stop are locked.</div>
+          <button class="mini" data-upd="${ri}">Update files</button>
+        </details>
+        ${r.supplies && r.supplies.length ? `<details><summary>You will need</summary><div class="supplies">${r.supplies.map(([a,b]) => `<b>${a}</b><span>${b}</span>`).join('')}</div></details>` : ''}
+        ${r.density ? `<div class="small" style="margin-top:6px"><a href="/api/job/${job}/file/${r.density}" target="_blank">Density map</a>: orange is dense, red is very dense.</div>` : ''}
+        <ul>${r.notes.map(n=>`<li>${n}</li>`).join('')}</ul>
+        <div class="dl">${r.files.map(f=>`<a href="/api/job/${job}/file/${f}" ${/\.(html|pdf|svg)$/.test(f) ? 'target="_blank"' : ''}>${fileLabel(f)}</a>`).join('')}</div>
+      </div>
+    </div>`; }).join('');
+  $$('[data-upd]').forEach(b => b.onclick = async () => {
+    const ri = +b.dataset.upd;
+    const stops = $$(`.stepl[data-r="${ri}"] input:checked:not(:disabled)`).map(i => +i.dataset.i);
+    b.textContent = 'Updating…';
+    const r = await fetch(`/api/job/${job}/stops`, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({index: ri, stops})});
+    if (!r.ok) { b.textContent = 'Could not update'; return; }
+    RESULTS[ri] = await r.json(); showResults();
+    const d = $$('details')[ri]; if (d) d.open = true;
+    status('Files updated with your stops.');
+  });
+}
+$('#reveal').onclick = () => fetch('/api/job/' + job + '/reveal', {method:'POST'});
+function status(t, err){ const s = $('#status'); s.textContent = t || ''; s.classList.toggle('err', !!err); }
+
+// ---------------------------------------------------------------- hoop check
+function hoopCheck(){
+  if (!SET.ask_hoop || !lastBody || lastBody.fit_hoop || (+lastBody.copies || 1) > 1) return;
+  const pref = SET.hoop, order = SET.hoops.map(h => h.key);
+  const big = RESULTS.filter(r => r.hoop_key !== pref && order.indexOf(r.hoop_key) > order.indexOf(pref) || r.hoop_key == null);
+  if (!big.length) return;
+  const hp = SET.hoops.find(h => h.key === pref), m = SET.margin_mm;
+  const list = big.map(r => `<li>${r.label}: ${fmtWH(r.w_mm, r.h_mm)} → ${r.hoop}</li>`).join('');
+  modal(`<h3>Bigger than your ${hp.name} hoop</h3>
+    <div>${big.length === 1 ? 'This piece is' : 'These pieces are'} bigger than the ${hp.name} hoop allows (${fmtWH(hp.w - 2*m, hp.h - 2*m)} with ${m} mm kept clear of the edge):</div>
+    <ul>${list}</ul>
+    <div class="small">Use the larger hoop, or go back and shrink ${big.length === 1 ? 'it' : 'them'} to fit the ${hp.name} hoop.</div>`,
+    [['Cancel: resize to fit ' + hp.name, () => { const b = Object.assign({}, lastBody, {fit_hoop: pref});
+        if (b.source === 'art') { const keep = big.map(r => r.inches); b.sizes = keep.filter(v => [1.5,2.5,3.5,5,7].includes(v)); b.custom = keep.filter(v => ![1.5,2.5,3.5,5,7].includes(v)).join(','); }
+        startJob(b); }],
+     ['Use the larger hoop', null, true]]);
+}
+
+// ---------------------------------------------------------------- modals, settings, projects, version
+function modal(html, buttons){
+  $('#modalbox').innerHTML = html + '<div class="acts">' + buttons.map((b, i) => `<button data-b="${i}" class="${b[2] ? 'pri' : ''}">${b[0]}</button>`).join('') + '</div>';
+  $('#modal').classList.remove('hidden');
+  $$('#modalbox .acts button').forEach(el => el.onclick = () => { const b = buttons[+el.dataset.b]; const keep = b[1] && b[1]() === false; if (!keep) $('#modal').classList.add('hidden'); });
+}
+$('#modal').onclick = e => { if (e.target.id === 'modal') $('#modal').classList.add('hidden'); };
+async function saveSettings(s){
+  const r = await fetch('/api/settings', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(s)});
+  Object.assign(SET, await r.json());
+}
+fetch('/api/settings').then(r => r.json()).then(s => { SET = s; setUnits(s.units || 'in', false); fillMaterials(); refresh(); loadRecent(); });
+$('#setbtn').onclick = () => {
+  const mine = SET.brands.filter(b => b.mine), built = SET.brands.filter(b => !b.mine && b.key !== 'none');
+  const opt = b => `<option value="${b.key}" ${b.key===SET.brand?'selected':''}>${b.name}</option>`;
+  const fabs = Object.entries(SET.fabrics || {});
+  modal(`<h3>Settings</h3>
+    <div class="row"><label>Your usual hoop<select id="s_hoop">${SET.hoops.map(h => `<option value="${h.key}" ${h.key===SET.hoop?'selected':''}>${h.name}</option>`).join('')}</select></label></div>
+    <div class="row"><label>Keep clear of the hoop edge, mm<input type="number" id="s_margin" min="0" max="30" step="0.5" value="${SET.margin_mm}"></label></div>
+    <label class="check"><input type="checkbox" id="s_ask" ${SET.ask_hoop?'checked':''}><span>Ask me when something is bigger than my usual hoop</span></label>
+    <h4>Thread</h4>
+    <div class="row" style="margin-top:0"><label>Match colours to<select id="s_brand">
+      ${mine.length ? `<optgroup label="Your thread charts">${mine.map(opt).join('')}</optgroup>` : ''}
+      <optgroup label="Built in">${built.map(opt).join('')}</optgroup>
+      <option value="none" ${SET.brand==='none'?'selected':''}>No thread matching</option></select></label></div>
+    <details><summary>Add a thread brand</summary>
+      <div class="tip">Use a chart saved as text (.txt, .csv or .gpl): one thread per line with its number, name and colour code (#6d1f2c) or red green blue numbers. Have a PDF, spreadsheet or photo of a chart? Send it to Claude and it will make the text chart for you.</div>
+      <div class="row"><label>Brand name<input type="text" id="s_bname" placeholder="e.g. Exquisite"></label></div>
+      <div class="row"><input type="file" id="s_bfile" accept=".txt,.csv,.gpl"></div>
+      <div class="row"><label>…or paste the chart<textarea id="s_btext" rows="4" style="width:100%;font:inherit;border:1px solid var(--line);border-radius:8px;padding:6px;background:var(--panel);color:var(--ink)" placeholder="1001, White, #ffffff"></textarea></label></div>
+      <button class="mini" id="s_badd" type="button">Add brand</button> <span class="small" id="s_bmsg"></span>
+    </details>
+    <h4>Supplies for each fabric</h4>
+    <div class="row" style="margin-top:0"><label>Fabric<select id="s_fab">${fabs.map(([k, v]) => `<option value="${k}">${v.name}</option>`).join('')}</select></label></div>
+    <div id="s_fabfields"></div>
+    <button class="mini" id="s_fabsave" type="button">Save these supplies</button> <span class="small" id="s_fabmsg"></span>`,
+    [['Cancel', null], ['Save', () => { saveSettings({hoop: $('#s_hoop').value, margin_mm: +$('#s_margin').value, ask_hoop: $('#s_ask').checked, brand: $('#s_brand').value}).then(drawCanvas); }, true]]);
+  const showFab = () => { const f = SET.fabrics[$('#s_fab').value];
+    $('#s_fabfields').innerHTML = ['needle','stabilizer','topping','extras'].map(k => `<div class="row"><label>${k[0].toUpperCase()+k.slice(1)}<input type="text" data-f="${k}" value="${(f[k]||'').replace(/"/g,'&quot;')}"></label></div>`).join(''); };
+  $('#s_fab').onchange = showFab; showFab();
+  $('#s_fabsave').onclick = async () => {
+    const body = {key: $('#s_fab').value}; $$('#s_fabfields input').forEach(i => body[i.dataset.f] = i.value);
+    const r = await fetch('/api/fabrics', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+    if (r.ok) { SET.fabrics[body.key] = await r.json(); $('#s_fabmsg').textContent = 'Saved.'; showSupplies(); } else $('#s_fabmsg').textContent = 'Could not save.';
+  };
+  $('#s_badd').onclick = async () => {
+    const fd = new FormData(); fd.append('name', $('#s_bname').value); fd.append('text', $('#s_btext').value);
+    if ($('#s_bfile').files[0]) fd.append('file', $('#s_bfile').files[0]);
+    const r = await fetch('/api/threads/import', {method:'POST', body: fd}); const j = await r.json();
+    if (!r.ok) { $('#s_bmsg').textContent = j.error; return; }
+    $('#s_bmsg').textContent = `Added with ${j.count} colours and chosen for matching.`;
+    const s2 = await (await fetch('/api/settings')).json(); Object.assign(SET, s2);
+  };
+};
+$('#ver').onclick = () => fetch('/api/version').then(r => r.json()).then(v => modal(`<h3>What's new in StitchKit ${v.version}</h3><pre>${v.whats_new.split('\n').slice(1).join('\n')}</pre>`, [['Close', null, true]]));
+
+function getState(){
+  const b = formBody();
+  return {v: 1, body: b, units: U, upload, items: ITEMS, lines: textLines(true), patch_in_in: lenIn($('#patch_in')), m_height_in: lenIn($('#m_height')),
+          checked_sizes: b.sizes, custom_in: parseCustom()};
+}
+async function setState(st){
+  await fontsReady;
+  const b = st.body;
+  source.set(b.source); kind.set(b.kind); density.set(b.density); band.set(b.frame_band);
+  $('#name').value = b.name || ''; $('#colours').value = b.colours || 3;
+  $$('#sizes input').forEach(i => { i.checked = (st.checked_sizes || []).includes(+i.value); i.parentElement.classList.toggle('on', i.checked); });
+  $('#custom').value = (st.custom_in || []).map(v => U === 'mm' ? Math.round(v * 25.4) : +(+v).toFixed(2)).join(', ');
+  setLen($('#patch_in'), st.patch_in_in); setLen($('#m_height'), st.m_height_in || 1.5);
+  ['gap','border_mm','frame_band_mm','frame_inner_mm','frame_band_colour','frame_center_colour','fabric','frame_center','copies','linegap'].forEach(k => {
+    const el = $('#' + k), v = b[k === 'gap' ? 'gap_mm' : (k === 'linegap' ? 'line_gap_mm' : k)]; if (el && v != null) { el.value = v; el.dispatchEvent(new Event('change')); } });
+  $('#bgcolour').value = b.background_colour || '#2b4a6f';
+  if (b.material) { $('#material').value = b.material; MAT_TOUCHED = true; showSupplies(); }
+  density.set(b.density);
+  $('#knockdown').checked = b.knockdown === 'on'; $('#kdrow').classList.toggle('hidden', !$('#knockdown').checked);
+  if (b.knockdown_colour) $('#knockdown_colour').value = b.knockdown_colour;
+  if (b.edge_style) $$('.edgesel').forEach(o => o.value = b.edge_style);
+  if (b.fill_style) $('#fill_style').value = b.fill_style;
+  $('#outline').checked = !!b.satin_outline; $('#borders').checked = b.detect_borders !== false; $('#basting').checked = !!b.basting;
+  $('#border_pick').value = b.border_colour ? 'custom' : ''; if (b.border_colour) $('#bordercolour').value = b.border_colour;
+  $('#border_pick').dispatchEvent(new Event('change'));
+  $$('#formats input').forEach(i => { i.checked = (b.formats || []).includes(i.value); i.parentElement.classList.toggle('on', i.checked); });
+  SHAPE = b.shape || 'outline'; pickIn($('#shapes'), SHAPE); setFrame(b.frame_key || 'notched');
+  const m = b.monogram || {};
+  $('#m_first').value = m.first || ''; $('#m_middle').value = m.middle || ''; $('#m_last').value = m.last || '';
+  $('#m_layout').value = m.layout || 'classic'; if (m.font) $('#m_font').value = m.font; $('#m_spacing').value = m.spacing_mm || 2; $('#m_colour').value = m.colour || '#151011';
+  $('#tlines').innerHTML = ''; (st.lines || []).forEach(l => addLine(l));
+  ITEMS = st.items || []; SEL = -1; listFiles();
+  upload = st.upload || null;
+  if (upload) { upload.ready = false; refresh(); await inspect(); }
+  refresh(); outlineChanged();
+}
+$('#projbtn').onclick = async () => {
+  const list = await (await fetch('/api/projects')).json();
+  modal(`<h3>Projects</h3>
+    <div class="row"><label>Save what's on screen as<input type="text" id="p_name" value="${($('#name').value || 'My project').replace(/"/g,'')}"></label></div>
+    <button class="mini" id="p_save">Save project</button> <span class="small" id="p_msg"></span>
+    <h4>Open a saved project</h4>
+    <div class="plist">${list.length ? list.map(p => `<div><span>${p.name}<br><span class="small">${p.saved}</span></span><button class="mini" data-open="${p.name}">Open</button></div>`).join('') : '<span class="small">None saved yet.</span>'}</div>
+    <div class="tip">Projects are kept in Documents › StitchKit › Projects, with copies of your files, so they still open if you move or delete the originals.</div>`,
+    [['Close', null, true]]);
+  $('#p_save').onclick = async () => {
+    const ups = [upload && upload.id, ...ITEMS.map(i => i.id)].filter(Boolean);
+    const r = await fetch('/api/projects/save', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name: $('#p_name').value, state: getState(), uploads: ups})});
+    const j = await r.json(); $('#p_msg').textContent = r.ok ? 'Saved as ' + j.name + '.' : j.error;
+  };
+  $$('[data-open]').forEach(b => b.onclick = async () => {
+    const r = await fetch('/api/projects/open', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name: b.dataset.open})});
+    const j = await r.json();
+    if (!r.ok) { $('#p_msg').textContent = j.error; return; }
+    $('#modal').classList.add('hidden');
+    await setState(j.state); status('Opened project ' + b.dataset.open + '.');
+  });
+};
+refresh();
+</script>
+</body>
+</html>

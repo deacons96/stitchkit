@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension translationdomain="inkstitch" xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+    <name>Select embroidery elements</name>
+    <id>org.{{ id_inkstitch }}.select_elements</id>
+    <param name="extension" type="string" gui-hidden="true">select_elements</param>
+
+    <param name="notebook" type="notebook">
+        <page name="stitch-type" gui-text="Select options">
+            <label appearance="header">Select Stitch Type</label>
+            <hbox>
+            <vbox>
+                <label>Stroke</label>
+                    <param indent="1" name="select-running-stitch" type="boolean" gui-text="Running Stitch">false</param>
+                    <param indent="3" name="running-stitch-condition" type="optiongroup" appearance="combo" gui-text="Type"
+                           gui-description="Select only specific running stitches">
+                        <option value="all">No restriction</option>
+                        <option value="autorun-top">Top Stitching (Redwork/Auto-Run)</option>
+                        <option value="autorun-underpath">Underpath (Redwork/Auto-Run)</option>
+                        <option value="autosatin-underpath">Underpath (Auto-Satin)</option>
+                    </param>
+                    <param indent="3" name="bean-stitch-repeats" type="string" gui-text="Bean stitch repeats">0</param>
+                    <param indent="1" name="select-ripples" type="boolean" gui-text="Ripples">false</param>
+                    <param indent="1" name="select-zigzag" type="boolean" gui-text="ZigZag Stitch">false</param>
+                    <param indent="1" name="select-manual" type="boolean" gui-text="Manual Stitch">false</param>
+            </vbox>
+            <spacer />
+            <separator />
+            <spacer />
+            <vbox>
+                <label>Satin</label>
+                  <param indent="1" name="select-satin" type="boolean" gui-text="Satin Column">false</param>
+                  <param indent="1" name="select-e" type="boolean" gui-text="E-Stitch">false</param>
+                  <param indent="1" name="select-s" type="boolean" gui-text="S-Stitch">false</param>
+                  <param indent="1" name="select-satin-zigzag" type="boolean" gui-text="Zig-Zag">false</param>
+                  <param indent="1" name="satin-underlay" type="optiongroup" appearance="combo" gui-text="Underlay"
+                         gui-description="Only select satins with this underlay type">
+                      <option value="all">No restriction</option>
+                      <option value="no">No underlay</option>
+                      <option value="center">Centerwalk</option>
+                      <option value="contour">Contour</option>
+                      <option value="zigzag">Zigzag</option>
+                  </param>
+                  <param indent="1" name="rung-count" type="optiongroup" appearance="combo" gui-text="Rung count"
+                         gui-description="Only select satins with this rung count">
+                      <option value="all">No restriction</option>
+                      <option value="zero">No Rungs</option>
+                      <option value="two">Two Rungs</option>
+                  </param>
+          </vbox>
+            <spacer />
+            <separator />
+            <spacer />
+          <vbox>
+                <label>Fill</label>
+                    <param indent="1" name="select-tatami-fill" type="boolean" gui-text="Tatami Fill">false</param>
+                    <param indent="1" name="select-circular-fill" type="boolean" gui-text="Circular Fill">false</param>
+                    <param indent="1" name="select-contour-fill" type="boolean" gui-text="Contour Fill">false</param>
+                    <param indent="1" name="select-guided-fill" type="boolean" gui-text="Guided Fill">false</param>
+                    <param indent="1" name="select-linear-gradient-fill" type="boolean" gui-text="Linear Gradient Fill">false</param>
+                    <param indent="1" name="select-meander-fill" type="boolean" gui-text="Meander Fill">false</param>
+                    <param indent="1" name="select-tartan-fill" type="boolean" gui-text="Tartan Fill">false</param>
+                    <param indent="1" name="select-legacy-fill" type="boolean" gui-text="Legacy Fill">false</param>
+                    <param indent="1" name="fill-underlay" type="optiongroup" appearance="combo" gui-text="Underlay"
+                           gui-description="Only select fills with this underlay">
+                        <option value="all">No restriction</option>
+                        <option value="yes">Underlay</option>
+                        <option value="no">No Underlay</option>
+                    </param>
+          </vbox>
+            <spacer />
+            <separator />
+            <spacer />
+          <vbox>
+                <label>Clone</label>
+                    <param indent="1" name="select-clone" type="boolean" gui-text="Clone">false</param>
+          </vbox>
+        </hbox>
+        </page>
+
+        <page name="info" gui-text="Help">
+            <label appearance="header">Select embroidery objects</label>
+            <spacer />
+            <label>Selects specific embroidery elements by stitch type.</label>
+            <label>If there is already an active selection, non matching elements will be deselected.</label>
+            <spacer />
+            <label>More info on our website</label>
+            <label appearance="url">https://inkstitch.org/docs/edit/#select-embroidery-elements/</label>
+            <spacer />
+            <separator />
+            <spacer />
+            <label appearance="header">Troubleshoot</label>
+            <spacer />
+            <label>If it isn't working:</label>
+            <spacer />
+            <label>1. Hit the apply button multiple times. </label>
+            <label>2. If it still isn't working, you may need to insert your path to a python executable manualy.</label>
+            <label indent="1">* Windows: Open the "Command Prompt" and type "where python". Copy the path and paste it here.</label>
+            <label indent="1">* Linux: Open the command line and type "which python3". Copy the path and paste it here.</label>
+            <label indent="1">* macOS: doesn't work, sorry</label>
+            <spacer />
+            <param indent="1" name="python-path" type="string" gui-text="Python Path"></param>
+        </page>
+    </param>
+
+    <effect needs-live-preview="false">
+        <object-type>all</object-type>
+        <icon>{{ icon_path }}inx/select_elements.svg</icon>
+        <effects-menu>
+            <submenu name="{{ menu_inkstitch }}" translatable="no">
+                <submenu name="Edit" />
+            </submenu>
+        </effects-menu>
+    </effect>
+    <script>
+        {{ command_tag | safe }}
+    </script>
+</inkscape-extension>

@@ -1,0 +1,16 @@
+StitchKit 1.2 beta
+- Cleaner satin borders and frame lines. They are now sewn as true satin columns, so no more tangles where scallops meet and no stitches flipping off the edge. Inward points are rounded just enough for the satin to turn.
+- Stitched backgrounds now fill the gaps between letters and inside letters (StitchKit measures what the stitches really cover).
+- Fabric choice: sweatshirt fleece, T-shirt, bandana cotton, patch twill, towel, canvas, denim or cap. It sets density and pull, and adds a knockdown stitch for towels and fleece.
+- "You will need" for every piece: needle, stabilizer, topping and extras such as HeatnBond Lite or water-soluble film for patches. Change any of them in Settings to match what you use.
+- Blanket stitch as an appliqué edge, for patches and frames.
+- Fill choice for artwork: straight rows, follow the shape (contour) or textured (meander).
+- Density map: dense spots shown in orange and red, with a note when an area is very dense.
+- Thread brands: 70+ built-in charts (Isacord, Madeira, Sulky, Robison-Anton and more) plus any chart you add in Settings.
+- Recent files: reopen what you worked on with one click.
+- Open in VectorCraft: edit an SVG there, save, and reload it in StitchKit.
+- Cricut cut files for appliqué inside stitch files you bring in (a placement line followed by a tackdown).
+- Colour preview: see how a PNG or JPG's colours will be merged before you make files.
+- Fixed: SVG files without a viewBox could hang while loading.
+
+Reminder: next version (1.3) adds your own VP3 frames (Documents > StitchKit > Frames) and monogram letter sets (Documents > StitchKit > Monogram Fonts), the new bamboo frames, the one-screen layout with live preview, shape editing, alignment tools and the grid.

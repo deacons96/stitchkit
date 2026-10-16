@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension translationdomain="inkstitch" xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+    <name>Troubleshoot Objects</name>
+    <id>org.{{ id_inkstitch }}.troubleshoot</id>
+    <param name="extension" type="string" gui-hidden="true">troubleshoot</param>
+
+    <param name="notebook" type="notebook">
+        <page name="options" gui-text="Options">
+            <label>Display</label>
+            <param name="show-errors" type="boolean" gui-text="Errors" indent="1"
+                   gui-description="Problems that will prevent the shape from being embroidered.">true</param>
+            <param name="show-warnings" type="boolean" gui-text="Warnings" indent="1"
+                   gui-description="Problems that may lead to incorrect stitch paths.">true</param>
+            <param name="show-type-warning" type="boolean" gui-text="Object type warning" indent="1"
+                   gui-description="Warns about unemboiderable object types.">true</param>
+            <spacer />
+            <separator />
+            <spacer />
+            <label>Size settings</label>
+            <param name="pointer-size" type="float" gui-text="Pointer size (mm)" min="1" max="800" precision="2">5</param>
+            <param name="font-size" type="float" gui-text="Font size (mm)" min="1" max="800" precision="2">2</param>
+        </page>
+        <page name="info" gui-text="Help">
+            <label>This extension points on problematic or possibly problematic spots in the document or selection.</label>
+            <spacer />
+            <label>More information on our website</label>
+            <label appearance="url">https://inkstitch.org/docs/troubleshoot/#troubleshoot-objects</label>
+        </page>
+    </param>
+
+    <effect>
+        <object-type>all</object-type>
+        <icon>{{ icon_path }}inx/troubleshoot.svg</icon>
+        <menu-tip>Marks problematic or possibly problematic spots in the document or selection</menu-tip>
+        <effects-menu>
+            <submenu name="{{ menu_inkstitch }}" translatable="no">
+                <submenu name="Troubleshoot" />
+            </submenu>
+        </effects-menu>
+    </effect>
+    <script>
+        {{ command_tag | safe }}
+    </script>
+</inkscape-extension>

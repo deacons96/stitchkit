@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension translationdomain="inkstitch" xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+    <name>Stitch Plan Preview</name>
+    <id>org.{{ id_inkstitch }}.stitch_plan_preview</id>
+    <param name="extension" type="string" gui-hidden="true">stitch_plan_preview</param>
+
+    <param name="notebook" type="notebook">
+        <page name="options" gui-text="Options">
+            <param name="layer-visibility" type="optiongroup" appearance="combo" gui-text="Design layer visibility">
+                <option value="unchanged">Unchanged</option>
+                <option value="hidden">Hidden</option>
+                <option value="lower_opacity">Lower opacity</option>
+            </param>
+            <param name="render-mode" type="optiongroup" appearance="combo" gui-text="Render Mode"
+                gui-description="Realistic modes will render to a raster image for performance reasons. Realistic Vector may cause Inkscape to slow down for complex designs.">
+                <option value="simple">Stitch Plan</option>
+                <option value="realistic-300">Realistic View</option>
+                <option value="realistic-600">Realistic View (High Quality)</option>
+                <option value="realistic-vector">Realistic Vector (slow)</option>
+            </param>
+            <spacer />
+            <separator />
+            <spacer />
+            <param name="move-to-side" type="boolean" gui-text="Move stitch plan beside the canvas">true</param>
+            <param name="needle-points" type="boolean" gui-text="Needle points">false</param>
+            <param name="visual-commands" type="boolean" gui-text="Display command symbols">false</param>
+            <param name="render-jumps" type="boolean" gui-text="Render jump stitches">true</param>
+            <spacer />
+            <separator />
+            <spacer />
+            <param name="insensitive" type="boolean" gui-text="Lock"
+                   gui-description="Make stitch plan insensitive to mouse interactions">false</param>
+            <param name="ignore-layer" type="boolean" gui-text="Add ignore layer command">true</param>
+            <param name="overwrite" type="boolean" gui-text="Override last stitch plan">true</param>
+            <spacer />
+        </page>
+        <page name="info" gui-text="Help">
+            <label>Use this extension to render the stitch plan into the canvas.</label>
+            <spacer />
+            <label>
+                Please use the realistic vector output option with care. Designs with many stitches can slow down Inkscape significantly.
+                Make sure that you save your design before using it.
+            </label>
+            <spacer />
+            <label>More information on our website</label>
+            <label appearance="url">https://inkstitch.org/docs/visualize/#stitch-plan-preview</label>
+        </page>
+    </param>
+
+    <effect>
+        <object-type>all</object-type>
+        <icon>{{ icon_path }}inx/stitch_plan_preview.svg</icon>
+        <effects-menu>
+            <submenu name="{{ menu_inkstitch }}" translatable="no">
+                <submenu name="Visualize and Export" />
+            </submenu>
+        </effects-menu>
+    </effect>
+
+    <script>
+        {{ command_tag | safe }}
+    </script>
+</inkscape-extension>

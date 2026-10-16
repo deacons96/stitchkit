@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension translationdomain="inkstitch" xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+    <name>Selection to guide line</name>
+    <id>org.{{ id_inkstitch }}.selection_to_guide_line</id>
+    <param name="extension" type="string" gui-hidden="true">selection_to_guide_line</param>
+    <effect>
+        <object-type>all</object-type>
+        <icon>{{ icon_path }}inx/guide_line.svg</icon>
+        <menu-tip>Marks selected elements as guide lines</menu-tip>
+        <effects-menu>
+            <submenu name="{{ menu_inkstitch }}" translatable="no">
+                <submenu name="Edit" />
+            </submenu>
+        </effects-menu>
+    </effect>
+    <script>
+        {{ command_tag | safe }}
+    </script>
+</inkscape-extension>

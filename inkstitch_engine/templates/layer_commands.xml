@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension translationdomain="inkstitch" xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+    <name>Add Layer Commands</name>
+    <id>org.{{ id_inkstitch }}.layer_commands</id>
+    <label>Commands will be added to the currently-selected layer.</label>
+    {% for command, description in layer_commands %}
+    <param name="{{ command }}" type="boolean" gui-text="{{ description }}">false</param>
+    {% endfor %}
+    <param name="extension" type="string" gui-hidden="true">layer_commands</param>
+    <effect>
+        <object-type>all</object-type>
+        <icon>{{ icon_path }}inx/commands.svg</icon>
+        <menu-tip>Add commands which affect the containing layer</menu-tip>
+        <effects-menu>
+            <submenu name="{{ menu_inkstitch }}" translatable="no">
+                <submenu name="Commands" />
+            </submenu>
+        </effects-menu>
+    </effect>
+    <script>
+        {{ command_tag | safe }}
+    </script>
+</inkscape-extension>

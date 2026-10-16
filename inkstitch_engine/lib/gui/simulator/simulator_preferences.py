@@ -1,0 +1,160 @@
+# Authors: see git history
+#
+# Copyright (c) 2024 Authors
+# Licensed under the GNU GPL version 3.0 or later.  See the file LICENSE for details.
+
+import wx
+from typing import TYPE_CHECKING, cast
+
+from ...i18n import _
+from ...utils.settings import DEFAULT_SETTINGS, global_settings
+
+if TYPE_CHECKING:
+    from .drawing_panel import DrawingPanel
+    from .control_panel import ControlPanel
+    from .view_panel import ViewPanel
+
+
+class SimulatorPreferenceDialog(wx.Dialog):
+    """A dialog to set simulator preferences
+    """
+
+    SETTINGS_KEYS = (
+        'simulator_adaptive_speed',
+        'simulator_line_width',
+        'simulator_npp_size',
+        'simulator_crosshair_radius',
+        'simulator_crosshair_thickness',
+        'simulator_crosshair_colour'
+    )
+
+    def __init__(self, *args, **kwargs) -> None:
+        super(SimulatorPreferenceDialog, self).__init__(*args, **kwargs)
+        self.SetWindowStyle(wx.FRAME_FLOAT_ON_PARENT | wx.DEFAULT_FRAME_STYLE)
+
+        self.view_panel = cast('ViewPanel', self.GetParent())
+        self.drawing_panel: 'DrawingPanel' = self.view_panel.drawing_panel
+        self.control_panel: 'ControlPanel' = self.view_panel.control_panel
+        self.initial_settings = {key: global_settings[key] for key in self.SETTINGS_KEYS}
+        self.applied = False
+
+        self.adaptive_speed_value = global_settings['simulator_adaptive_speed']
+        self.line_width_value = global_settings['simulator_line_width']
+        self.npp_size_value = global_settings['simulator_npp_size']
+        self.crosshair_radius_value = global_settings['simulator_crosshair_radius']
+        self.crosshair_thickness_value = global_settings['simulator_crosshair_thickness']
+        self.crosshair_colour_value = global_settings['simulator_crosshair_colour']
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        settings_sizer = wx.FlexGridSizer(6, 2, 5, 5)
+        speed_label = wx.StaticText(self, label=_("Adapt speed to stitch count"))
+        self.adaptive_speed = wx.CheckBox(self)
+        self.adaptive_speed.SetToolTip(_("When enabled simulation speed adapts itself to the stitch count."))
+        self.adaptive_speed.SetValue(self.adaptive_speed_value)
+        self.adaptive_speed.Bind(wx.EVT_CHECKBOX, self.on_adaptive_speed_changed)
+        line_width_label = wx.StaticText(self, label=_("Line width (mm)"))
+        self.line_width = wx.SpinCtrlDouble(self, min=0.03, max=2, initial=0.1, inc=0.01, style=wx.SP_WRAP | wx.SP_ARROW_KEYS)
+        self.line_width.SetDigits(2)
+        self.line_width.SetValue(self.line_width_value)
+        self.line_width.Bind(wx.EVT_SPINCTRLDOUBLE, lambda event: self.on_change("simulator_line_width", event))
+        npp_size_label = wx.StaticText(self, label=_("Needle penetration point size (mm)"))
+        self.npp_size = wx.SpinCtrlDouble(self, min=0.03, max=2, initial=0.5, inc=0.01, style=wx.SP_WRAP | wx.SP_ARROW_KEYS)
+        self.npp_size.SetDigits(2)
+        self.npp_size.SetValue(self.npp_size_value)
+        self.npp_size.Bind(wx.EVT_SPINCTRLDOUBLE, lambda event: self.on_change("simulator_npp_size", event))
+        settings_sizer.Add(speed_label, 0, wx.ALIGN_CENTRE | wx.ALL, 10)
+        settings_sizer.Add(self.adaptive_speed, 0, wx.EXPAND | wx.ALL, 10)
+        settings_sizer.Add(line_width_label, 0, wx.ALIGN_CENTRE | wx.ALL, 10)
+        settings_sizer.Add(self.line_width, 0, wx.EXPAND | wx.ALL, 10)
+        settings_sizer.Add(npp_size_label, 0, wx.ALIGN_CENTRE | wx.ALL, 10)
+        settings_sizer.Add(self.npp_size, 0, wx.EXPAND | wx.ALL, 10)
+        crosshair_radius_label = wx.StaticText(self, label=_("Crosshair radius (px)"))
+        self.crosshair_radius = wx.SpinCtrl(self, min=1, max=100, initial=10, style=wx.SP_WRAP | wx.SP_ARROW_KEYS)
+        self.crosshair_radius.SetValue(self.crosshair_radius_value)
+        self.crosshair_radius.Bind(wx.EVT_SPINCTRL, lambda event: self.on_change("simulator_crosshair_radius", event))
+        crosshair_thickness_label = wx.StaticText(self, label=_("Crosshair thickness (px)"))
+        self.crosshair_thickness = wx.SpinCtrl(self, min=1, max=20, initial=1, style=wx.SP_WRAP | wx.SP_ARROW_KEYS)
+        self.crosshair_thickness.SetValue(self.crosshair_thickness_value)
+        self.crosshair_thickness.Bind(wx.EVT_SPINCTRL, lambda event: self.on_change("simulator_crosshair_thickness", event))
+        settings_sizer.Add(crosshair_radius_label, 0, wx.ALIGN_CENTRE | wx.ALL, 10)
+        settings_sizer.Add(self.crosshair_radius, 0, wx.EXPAND | wx.ALL, 10)
+        settings_sizer.Add(crosshair_thickness_label, 0, wx.ALIGN_CENTRE | wx.ALL, 10)
+        settings_sizer.Add(self.crosshair_thickness, 0, wx.EXPAND | wx.ALL, 10)
+        crosshair_colour_label = wx.StaticText(self, label=_("Crosshair colour"))
+        self.crosshair_colour = wx.ColourPickerCtrl(self, colour=wx.Colour(self.crosshair_colour_value))
+        self.crosshair_colour.Bind(wx.EVT_COLOURPICKER_CHANGED, self.on_crosshair_colour_changed)
+        settings_sizer.Add(crosshair_colour_label, 0, wx.ALIGN_CENTRE | wx.ALL, 10)
+        settings_sizer.Add(self.crosshair_colour, 0, wx.EXPAND | wx.ALL, 10)
+
+        button_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        btn_cancel = wx.Button(self, id=wx.ID_CANCEL, label=_('Cancel'))
+        btn_cancel.Bind(wx.EVT_BUTTON, self.on_cancel)
+        btn_defaults = wx.Button(self, label=_('Restore defaults'))
+        btn_defaults.Bind(wx.EVT_BUTTON, self.on_restore_defaults)
+        btn_apply = wx.Button(self, id=wx.ID_OK, label=_('Apply'))
+        btn_apply.Bind(wx.EVT_BUTTON, self.on_apply)
+        button_sizer.Add(btn_cancel, 0, wx.RIGHT, 10)
+        button_sizer.Add(btn_defaults, 0, wx.RIGHT, 10)
+        button_sizer.Add(btn_apply, 0, wx.RIGHT, 10)
+
+        sizer.Add(settings_sizer, 1, wx.ALL, 10)
+        sizer.Add(button_sizer, 0, wx.ALIGN_RIGHT | wx.ALL, 10)
+        self.SetSizerAndFit(sizer)
+
+    def on_change(self, attribute, event):
+        global_settings[attribute] = event.EventObject.GetValue()
+        if attribute == 'simulator_line_width':
+            self.drawing_panel.update_pen_size()
+        self.drawing_panel.Refresh()
+
+    def on_crosshair_colour_changed(self, event):
+        global_settings['simulator_crosshair_colour'] = event.GetColour().GetAsString(wx.C2S_HTML_SYNTAX)
+        self.drawing_panel.Refresh()
+
+    def on_adaptive_speed_changed(self, event=None):
+        adaptive_speed = self.adaptive_speed.GetValue()
+        global_settings['simulator_adaptive_speed'] = adaptive_speed
+        self.control_panel.choose_speed()
+        self.control_panel.Refresh()
+
+    def save_settings(self):
+        global_settings['simulator_adaptive_speed'] = self.adaptive_speed.GetValue()
+        global_settings['simulator_line_width'] = self.line_width.GetValue()
+        global_settings['simulator_npp_size'] = self.npp_size.GetValue()
+        global_settings['simulator_crosshair_radius'] = self.crosshair_radius.GetValue()
+        global_settings['simulator_crosshair_thickness'] = self.crosshair_thickness.GetValue()
+        global_settings['simulator_crosshair_colour'] = self.crosshair_colour.GetColour().GetAsString(wx.C2S_HTML_SYNTAX)
+
+    def refresh_preview(self):
+        if self.drawing_panel.stitch_plan is not None:
+            self.drawing_panel.update_pen_size()
+        self.control_panel.choose_speed()
+        self.control_panel.Refresh()
+        self.drawing_panel.Refresh()
+
+    def restore_initial_settings(self):
+        if self.applied:
+            return
+
+        for key, value in self.initial_settings.items():
+            global_settings[key] = value
+        self.refresh_preview()
+
+    def on_restore_defaults(self, event):
+        self.adaptive_speed.SetValue(DEFAULT_SETTINGS['simulator_adaptive_speed'])
+        self.line_width.SetValue(DEFAULT_SETTINGS['simulator_line_width'])
+        self.npp_size.SetValue(DEFAULT_SETTINGS['simulator_npp_size'])
+        self.crosshair_radius.SetValue(DEFAULT_SETTINGS['simulator_crosshair_radius'])
+        self.crosshair_thickness.SetValue(DEFAULT_SETTINGS['simulator_crosshair_thickness'])
+        self.crosshair_colour.SetColour(wx.Colour(DEFAULT_SETTINGS['simulator_crosshair_colour']))
+        self.save_settings()
+        self.refresh_preview()
+
+    def on_apply(self, event):
+        self.save_settings()
+        self.applied = True
+        self.Close()
+
+    def on_cancel(self, event):
+        self.restore_initial_settings()
+        self.Close()

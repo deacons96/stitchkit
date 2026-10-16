@@ -1,0 +1,1 @@
+Ink/Stitch commit 97d1cc7b929a32b9264e8ddcb13e14e790106ac6 (https://github.com/inkstitch/inkstitch), GPL-3.0. Unmodified.

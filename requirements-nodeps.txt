@@ -1,0 +1,2 @@
+# installed without its optional extras (scour, PyGObject), which StitchKit does not need
+inkex==1.4.1

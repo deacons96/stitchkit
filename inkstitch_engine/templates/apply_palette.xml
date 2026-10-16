@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension translationdomain="inkstitch" xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+    <name>Apply Palette</name>
+    <id>org.{{ id_inkstitch }}.apply_palette</id>
+    <param name="extension" type="string" gui-hidden="true">apply_palette</param>
+    <effect implements-custom-gui="true" show-stderr="true">
+        <object-type>all</object-type>
+        <icon>{{ icon_path }}inx/color_management.svg</icon>
+        <menu-tip>Matches colors of all elements in the document to a specified palette</menu-tip>
+        <effects-menu>
+            <submenu name="{{ menu_inkstitch }}" translatable="no">
+                <submenu name="Thread Color Management" />
+            </submenu>
+        </effects-menu>
+    </effect>
+    <script>
+        {{ command_tag | safe }}
+    </script>
+</inkscape-extension>

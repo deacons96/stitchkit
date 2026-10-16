@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension translationdomain="inkstitch" xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+    <name>Attach Commands to Selected Objects</name>
+    <id>org.{{ id_inkstitch }}.commands</id>
+    {%- for command, description in object_commands -%}
+    <param name="{{ command }}" type="boolean" gui-text="{{ description }}">false</param>
+    {% endfor %}
+    <param name="command_position" type="optiongroup" appearance="combo" gui-text="Command position">
+       <option value="random" default="true">Random</option>
+       <option value="top_left">Top left</option>
+       <option value="top_right">Top right</option>
+       <option value="bottom_left">Bottom left</option>
+       <option value="bottom_right">Bottom right</option>
+</param>
+    <param name="extension" type="string" gui-hidden="true">object_commands</param>
+    <effect>
+        <object-type>all</object-type>
+        <icon>{{ icon_path }}inx/commands.svg</icon>
+        <menu-tip>Add commands which affect selected elememts</menu-tip>
+        <effects-menu>
+            <submenu name="{{ menu_inkstitch }}" translatable="no">
+                <submenu name="Commands" />
+            </submenu>
+        </effects-menu>
+    </effect>
+    <script>
+        {{ command_tag | safe }}
+    </script>
+</inkscape-extension>
