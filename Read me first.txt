@@ -1,10 +1,10 @@
-STITCHKIT 1.3 beta
+STITCHKIT 1.4 beta
 Digitize artwork, make patches, frames and bag tags on your Mac. Everything runs on your computer.
 
 ------------------------------------------------------------
 INSTALLING (the first time, or updating from 1.2)
 ------------------------------------------------------------
-1. Double-click StitchKit-1.3.zip to unzip it. Drag StitchKit (the app with the raspberry S)
+1. Double-click StitchKit-1.4.zip to unzip it. Drag StitchKit (the app with the raspberry S)
    into your Applications folder.
 2. Double-click StitchKit in Applications.
    macOS will say it can't check the app for malicious software (it isn't from the App Store).
@@ -71,6 +71,16 @@ Monograms  Documents > StitchKit > Monogram Fonts, plus any folders you add in S
            frame or tag. Classic monograms use a smaller size of the same font for the side
            letters.
 Click "Reload" in your browser after adding files.
+
+------------------------------------------------------------
+THREAD STASH
+------------------------------------------------------------
+Click "Thread stash" at the top. Pick a brand, then search by number or name and click a thread
+to add it, or type all your numbers at once (0015 0020 1902) and press Add these numbers.
+StitchKit matches your designs to the threads you own first. If nothing you own is close, the
+thread sheet says so and puts a closer thread from your usual brand on the shopping list.
+Click "low?" on a thread you're running out of and it goes on the shopping list too.
+Your stash is saved in Documents > StitchKit > Thread stash.json.
 
 ------------------------------------------------------------
 CHANGE SHAPES (artwork)

@@ -202,6 +202,20 @@ details.more summary{cursor:pointer;color:var(--rasp-d)}
 .modal pre{white-space:pre-wrap;font:inherit;margin:0}
 .flist div{display:flex;gap:8px;align-items:center;padding:4px 0;font-size:13px}
 .flist span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* thread stash */
+.modal .box.wide{max-width:720px}
+.stsearch{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-top:10px;max-height:190px;overflow:auto}
+.stsearch button{display:flex;gap:7px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:5px 7px;cursor:pointer;font-size:12.5px;line-height:1.2}
+.stsearch button:hover{border-color:var(--rasp)} .stsearch button.have{opacity:.45;cursor:default}
+.ssw{width:22px;height:22px;border-radius:5px;border:1px solid #0002;flex:none}
+.stlist h5{margin:14px 0 4px;font-size:12.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.stgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:4px 10px}
+.stgrid > div{display:flex;gap:7px;align-items:center;font-size:13px;padding:3px 0}
+.stgrid .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lowb{border:1px solid var(--line);background:none;border-radius:999px;font-size:11px;padding:1px 7px;cursor:pointer;color:var(--muted)}
+.lowb.on{background:#f3d27a;border-color:#d9b24a;color:#5b4300}
+.stmsg{font-size:12.5px;color:var(--rasp-d);min-height:18px;margin-top:6px}
 </style>
 </head>
 <body>
@@ -214,6 +228,7 @@ details.more summary{cursor:pointer;color:var(--rasp-d)}
   <span class="sp"></span>
   <span class="useg" id="units"><button data-u="in">in</button><button data-u="mm">mm</button></span>
   <button class="hb" id="projbtn">Projects</button>
+  <button class="hb" id="stashbtn">Thread stash</button>
   <button class="hb" id="setbtn">Settings</button>
 </header>
 <main>
@@ -419,6 +434,7 @@ details.more summary{cursor:pointer;color:var(--rasp-d)}
   </div>
 </section>
 </main>
+<datalist id="stashcolours"></datalist>
 <div class="modal hidden" id="modal"><div class="box" id="modalbox"></div></div>
 
 <script>
@@ -975,7 +991,7 @@ function showInfo(){
   if (!p) { $('#pinfo').innerHTML = '<span class="note">Nothing to preview yet.</span>'; return; }
   const t = p.minutes < 60 ? p.minutes + ' min' : Math.floor(p.minutes/60) + ' h ' + (p.minutes%60) + ' min';
   $('#pinfo').innerHTML = `<span><b>${fmtWH(p.w_mm, p.h_mm)}</b></span><span>${p.stitches.toLocaleString()} stitches</span><span>about ${t}</span>
-    <span class="threads" title="Thread order">${p.blocks.map(b => `<i style="background:${b.colour}" title="${esc(b.match ? b.match.number + ' ' + b.match.name : b.colour)}: ${esc(b.steps.join(', '))}"></i>`).join('')}</span>
+    <span class="threads" title="Thread order">${p.blocks.map(b => `<i style="background:${b.colour}" title="${esc(b.match ? threadText(b.match) : b.colour)}: ${esc(b.steps.join(', '))}"></i>`).join('')}</span>
     <span class="note" style="flex:1;min-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc((p.notes || []).join('\n'))}">${esc(((p.notes || []).filter(n => !/kept exactly/.test(n))[0]) || '')}</span>`;
   $('#psize').textContent = '';
 }
@@ -1225,7 +1241,7 @@ function fileLabel(f){
 function showResults(j){
   const cards = RESULTS.map((r, ri) => {
     const blocks = r.blocks.map((b, i) => { const m = b.match;
-      return `<div><span class="sw"><i style="background:${b.colour}"></i></span><span>${m ? `<b>${esc(m.number)}</b> ${esc(m.name)}` : b.colour}<br><span class="tip" style="margin:0">${esc(b.steps.join(', '))} · ${b.stitches.toLocaleString()}</span></span>${b.stop ? '<span class="stop">stop first</span>' : ''}</div>`; }).join('');
+      return `<div><span class="sw"><i style="background:${b.colour}"></i></span><span>${m ? `<b>${esc(m.number)}</b> ${esc(m.name)}${m.in_stash ? ` <span class="tip" style="margin:0">${esc(m.brand)}${m.low ? ', running low' : ''}</span>` : ''}${m.buy ? `<br><span class="tip" style="margin:0;color:var(--rasp-d)">Closer to buy: ${esc(m.buy.brand + ' ' + m.buy.number + ' ' + m.buy.name)}</span>` : ''}` : b.colour}<br><span class="tip" style="margin:0">${esc(b.steps.join(', '))} · ${b.stitches.toLocaleString()}</span></span>${b.stop ? '<span class="stop">stop first</span>' : ''}</div>`; }).join('');
     const steps = r.steps.map(s => `<label><input type="checkbox" data-i="${s.i}" ${s.stop || s.auto_stop ? 'checked' : ''} ${s.auto_stop ? 'disabled' : ''}><span class="sw"><i style="background:${s.colour}"></i></span><span>${s.i+1}. ${esc(s.label)} <span class="tip">${s.stitches.toLocaleString()}</span></span></label>`).join('');
     const t = r.minutes < 60 ? r.minutes + ' min' : Math.floor(r.minutes/60) + ' h ' + (r.minutes%60) + ' min';
     return `<div class="card"><div class="img"><img src="/api/job/${job}/file/${r.preview}?t=${Date.now()}" alt="${esc(r.base)} preview"></div>
@@ -1256,12 +1272,13 @@ function hoopCheck(){
 }
 
 // ---------------------------------------------------------------- modal, settings, projects, version
-function modal(html, buttons){
+function modal(html, buttons, wide){
+  $('#modalbox').classList.toggle('wide', !!wide);
   $('#modalbox').innerHTML = html + '<div class="acts">' + buttons.map((b, i) => `<button data-b="${i}" class="${b[2] ? 'pri' : ''}" type="button">${b[0]}</button>`).join('') + '</div>';
   $('#modal').classList.remove('hidden');
   $$('#modalbox .acts button').forEach(el => el.onclick = () => { const b = buttons[+el.dataset.b]; const keep = b[1] && b[1]() === false; if (!keep) $('#modal').classList.add('hidden'); });
 }
-$('#modal').onmousedown = e => { if (e.target.id === 'modal') $('#modal').classList.add('hidden'); };
+$('#modal').onmousedown = e => { if (e.target.id === 'modal') { $('#modal').classList.add('hidden'); if (STASH_DIRTY) { STASH_DIRTY = false; changed(); } } };
 async function saveSettings(s){ Object.assign(SET, await api('/api/settings', s)); }
 $('#setbtn').onclick = () => {
   const mine = SET.brands.filter(b => b.mine), built = SET.brands.filter(b => !b.mine && b.key !== 'none');
@@ -1301,6 +1318,88 @@ $('#setbtn').onclick = () => {
     try { Object.assign(SET, await api('/api/folders/add', {kind: b.dataset.add === 'monogram_folders' ? 'monogram' : 'frames'})); await loadLibrary(); $('#setbtn').click(); } catch (e) { b.textContent = e.message; } });
   $$('#modalbox [data-rm]').forEach(b => b.onclick = async () => { Object.assign(SET, await api('/api/folders/remove', {kind: b.dataset.rm === 'monogram_folders' ? 'monogram' : 'frames', path: b.dataset.p})); await loadLibrary(); $('#setbtn').click(); });
   $('#s_quit').onclick = () => { api('/api/quit', {}); document.body.innerHTML = '<div style="padding:60px;text-align:center;font:400 22px var(--serif)">StitchKit has quit. You can close this tab.</div>'; };
+};
+
+// ---------------------------------------------------------------- thread stash
+function threadText(m){
+  let t = (m.brand ? m.brand + ' ' : '') + m.number + ' ' + m.name;
+  if (m.in_stash) t += m.low ? ' (in your stash, running low)' : ' (in your stash)';
+  if (m.buy) t += '. Closer to buy: ' + m.buy.brand + ' ' + m.buy.number + ' ' + m.buy.name;
+  return t;
+}
+let STASH = {use: true, threads: [], brands: []};
+function hueKey(hx){ const r = parseInt(hx.slice(1,3),16)/255, g = parseInt(hx.slice(3,5),16)/255, b = parseInt(hx.slice(5,7),16)/255;
+  const mx = Math.max(r,g,b), mn = Math.min(r,g,b), d = mx - mn, l = (mx + mn) / 2;
+  if (d < 0.08) return 1000 + (1 - l);            // whites, greys and blacks last, light to dark
+  let h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return ((h * 60 + 360) % 360) + (1 - l) * 0.5; }
+function stashColours(){
+  $('#stashcolours').innerHTML = STASH.threads.map(t => `<option value="${t.hex}">${esc(t.brand_name + ' ' + t.number)}</option>`).join('');
+  $$('input[type=color]').forEach(i => { if (STASH.threads.length) i.setAttribute('list', 'stashcolours'); else i.removeAttribute('list'); });
+}
+new MutationObserver(() => { if (STASH.threads.length) $$('input[type=color]:not([list])').forEach(i => i.setAttribute('list', 'stashcolours')); })
+  .observe(document.body, {childList: true, subtree: true});
+async function loadStash(){ try { STASH = await api('/api/stash'); stashColours(); } catch (e) {} }
+async function stashPost(body){
+  const r = await fetch('/api/stash', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+  const j = await r.json(); if (!r.ok) throw new Error(j.error || 'Something went wrong.');
+  STASH.threads = j.threads; STASH.use = j.use; stashColours(); STASH_DIRTY = true; return j.message || '';
+}
+let STASH_DIRTY = false, STASH_BRAND = null;
+$('#stashbtn').onclick = async () => {
+  await loadStash();
+  const brands = STASH.brands;
+  if (!STASH_BRAND || !brands.some(b => b.key === STASH_BRAND)) {
+    STASH_BRAND = (SET.brand && SET.brand !== 'none' && brands.some(b => b.key === SET.brand)) ? SET.brand :
+      ((brands.find(b => /isacord/i.test(b.name)) || brands[0] || {}).key);
+  }
+  modal(`<h3>Thread stash</h3>
+    <div class="tip" style="margin-top:0">The threads you own. StitchKit picks from these first, so your thread sheets name thread you already have. When nothing you own is close, it suggests one to buy.</div>
+    <label class="check"><input type="checkbox" id="st_use" ${STASH.use ? 'checked' : ''}><span>Match my designs to my stash first</span></label>
+    <h4>Add threads</h4>
+    <div class="row" style="margin-top:0"><label style="flex:0 0 200px"><span class="lab">Brand</span><select id="st_brand">${brands.map(b => `<option value="${esc(b.key)}" ${b.key === STASH_BRAND ? 'selected' : ''}>${esc(b.name)}</option>`).join('')}</select></label>
+      <label><span class="lab">Search by number or name, or type several numbers</span><input type="text" id="st_q" placeholder="e.g. 1902  or  wine  or  0015 0020 1902" autocomplete="off"></label>
+      <button class="mini pri" id="st_addall" type="button" style="margin-bottom:4px">Add these numbers</button></div>
+    <div class="stsearch" id="st_res"></div>
+    <div class="stmsg" id="st_msg"></div>
+    <details class="more"><summary>A thread that isn't on any chart</summary>
+      <div class="row"><label><span class="lab">Brand</span><input type="text" id="st_ob" placeholder="e.g. Exquisite"></label><label><span class="lab">Number</span><input type="text" id="st_on"></label>
+        <label><span class="lab">Name</span><input type="text" id="st_onm"></label><label style="flex:0"><span class="lab">Colour</span><input type="color" id="st_oc" value="#b3264f"></label>
+        <button class="mini" id="st_oadd" type="button" style="margin-bottom:4px">Add</button></div></details>
+    <h4>Your stash <span class="tip" id="st_count"></span></h4>
+    <div class="stlist" id="st_list"></div>`, [['Done', () => { if (STASH_DIRTY) { STASH_DIRTY = false; changed(); } }, true]], true);
+  const msg = t => $('#st_msg').textContent = t || '';
+  const owned = () => new Set(STASH.threads.filter(t => t.brand === STASH_BRAND).map(t => String(t.number).replace(/^0+/, '')));
+  let seq = 0;
+  const search = async () => { const my = ++seq; const q = $('#st_q').value;
+    const j = await api('/api/stash/find?brand=' + encodeURIComponent(STASH_BRAND) + '&q=' + encodeURIComponent(q.trim().split(/[\s,;]+/).length > 1 ? '' : q));
+    if (my !== seq) return; const have = owned();
+    $('#st_res').innerHTML = j.rows.length ? j.rows.map(r => { const h = have.has(String(r.number).replace(/^0+/, ''));
+      return `<button type="button" class="${h ? 'have' : ''}" data-n="${esc(r.number)}" title="${h ? 'Already in your stash' : 'Add to your stash'}"><span class="ssw" style="background:${r.hex}"></span><span><b>${esc(r.number)}</b><br>${esc(r.name)}</span></button>`; }).join('')
+      : '<div class="tip">No threads found on this chart.</div>';
+    $$('#st_res button:not(.have)').forEach(b => b.onclick = async () => { try { msg(await stashPost({brand: STASH_BRAND, add: b.dataset.n})); list(); search(); } catch (e) { msg(e.message); } });
+  };
+  const list = () => {
+    const groups = {};
+    STASH.threads.forEach(t => (groups[t.brand_name] = groups[t.brand_name] || []).push(t));
+    $('#st_count').textContent = STASH.threads.length ? `${STASH.threads.length} thread${STASH.threads.length > 1 ? 's' : ''}, sorted by colour` : '';
+    $('#st_list').innerHTML = Object.keys(groups).sort().map(g => `<h5>${esc(g)}</h5><div class="stgrid">${groups[g].sort((a, b) => hueKey(a.hex) - hueKey(b.hex)).map(t =>
+      `<div><span class="ssw" style="background:${t.hex}"></span><span class="nm" title="${esc(t.number + ' ' + t.name)}"><b>${esc(t.number)}</b> ${esc(t.name)}</span>
+        <button class="lowb ${t.low ? 'on' : ''}" data-low="${t.id}" type="button" title="Mark as running low">${t.low ? 'Low' : 'low?'}</button><button class="x" data-rm="${t.id}" type="button" title="Remove">×</button></div>`).join('')}</div>`).join('')
+      || '<div class="tip">Nothing here yet. Search above and click a thread, or type all your numbers at once.</div>';
+    $$('#st_list [data-low]').forEach(b => b.onclick = async () => { const t = STASH.threads.find(x => x.id === b.dataset.low); await stashPost({id: t.id, low: !t.low}); list(); });
+    $$('#st_list [data-rm]').forEach(b => b.onclick = async () => { await stashPost({id: b.dataset.rm, remove: true}); list(); search(); });
+  };
+  $('#st_use').onchange = async e => { await stashPost({use: e.target.checked}); };
+  $('#st_brand').onchange = e => { STASH_BRAND = e.target.value; msg(''); search(); };
+  let tmr; $('#st_q').oninput = () => { clearTimeout(tmr); tmr = setTimeout(search, 150); };
+  const addAll = async () => { const q = $('#st_q').value.trim(); if (!q) return;
+    try { msg(await stashPost({brand: STASH_BRAND, add: q})); $('#st_q').value = ''; list(); search(); } catch (e) { msg(e.message); } };
+  $('#st_addall').onclick = addAll;
+  $('#st_q').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); addAll(); } };
+  $('#st_oadd').onclick = async () => { try { msg(await stashPost({own: {brand: $('#st_ob').value, number: $('#st_on').value, name: $('#st_onm').value, hex: $('#st_oc').value}}));
+    $('#st_on').value = ''; $('#st_onm').value = ''; list(); } catch (e) { msg(e.message); } };
+  list(); search(); $('#st_q').focus();
 };
 $('#ver').onclick = async () => { const v = await api('/api/version'); modal(`<h3>What's new in StitchKit ${esc(v.version)}</h3><pre>${esc(v.whats_new.split('\n').slice(1).join('\n'))}</pre>`, [['Close', null, true]]); };
 
@@ -1357,6 +1456,7 @@ $('#projbtn').onclick = async () => {
 // ---------------------------------------------------------------- start up
 (async () => {
   try { SET = await api('/api/settings'); } catch (e) {}
+  loadStash();
   setUnits(SET.units || 'in', false); fillMaterials();
   await loadCatalogues(); await fontsReady; refresh(); loadRecent(); draw();
   setInterval(() => fetch('/api/ping', {method:'POST'}).catch(() => {}), 20000); fetch('/api/ping', {method:'POST'}).catch(() => {});

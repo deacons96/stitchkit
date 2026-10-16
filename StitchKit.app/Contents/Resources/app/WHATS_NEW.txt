@@ -1,3 +1,11 @@
+StitchKit 1.4 beta (first part: thread stash)
+- Thread stash: click "Thread stash" at the top to list the threads you own. Search any brand by number or name and click to add, or type all your numbers at once (0015 0020 1902). A thread that isn't on any chart can be added with its colour.
+- StitchKit now picks from your stash first. The thread sheet says which brand each thread is and that it's in your stash.
+- When nothing you own is close, the thread sheet says so and suggests a closer thread from your usual brand.
+- Shopping list on the thread sheet: threads to buy for this design, plus stash threads you marked as running low.
+- Colour pickers show your stash colours as quick choices.
+- Turn "Match my designs to my stash first" off to go back to matching a whole brand chart.
+
 StitchKit 1.3.1 beta
 - Setup fix: the "Setting up StitchKit" page now shows each step and StitchKit opens by itself when it is ready. If setup stops, it says so instead of waiting forever.
 

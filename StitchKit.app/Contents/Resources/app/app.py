@@ -88,6 +88,8 @@ def get_settings():
     s['hoops'] = hoops.HOOPS
     s['brands'] = [dict(key=k, name=v[0], mine=k.startswith(('user:', 'mine'))) for k, v in threads.brands().items()]
     s['my_threads'] = len(threads.chart('mine'))
+    st = threads.stash()
+    s['stash'] = dict(use=st['use'], count=len(st['threads']))
     s['fabrics'] = {k: dict(v) for k, v in fabrics.load().items()}
     s['vectorcraft'] = vectorcraft_app() is not None
     return jsonify(s)
@@ -116,6 +118,49 @@ def thread_import():
     s['brand'] = key
     SETTINGS.write_text(json.dumps(s, indent=2))
     return jsonify(key=key, count=n)
+
+
+@app.get('/api/stash')
+def stash_get():
+    d = threads.stash()
+    d['brands'] = [dict(key=k, name=v[0]) for k, v in threads.brands().items() if k != 'none']
+    return jsonify(d)
+
+
+@app.get('/api/stash/find')
+def stash_find():
+    rows = threads.find(request.args.get('brand', ''), request.args.get('q', ''))
+    return jsonify(rows=[dict(number=r['number'], name=r['name'], hex=r['hex']) for r in rows])
+
+
+@app.post('/api/stash')
+def stash_change():
+    data = request.get_json(force=True)
+    try:
+        msg = ''
+        if 'add' in data:
+            added, already, missing = threads.stash_add(data.get('brand', ''), str(data['add']))
+            parts = []
+            if added:
+                parts.append('Added %d.' % len(added))
+            if already:
+                parts.append('Already in your stash: %s.' % ', '.join(already))
+            if missing:
+                parts.append('Not on this chart: %s.' % ', '.join(missing))
+            msg = ' '.join(parts) or 'Nothing to add.'
+        elif 'own' in data:
+            o = data['own']
+            threads.stash_add_own(o.get('brand'), o.get('number'), o.get('name'), o.get('hex'))
+            msg = 'Added.'
+        elif 'id' in data:
+            threads.stash_update(data['id'], remove=data.get('remove'), **({'low': data['low']} if 'low' in data else {}))
+        elif 'use' in data:
+            threads.stash_use(data['use'])
+    except ValueError as e:
+        return jsonify(error=str(e)), 400
+    d = threads.stash()
+    d['message'] = msg
+    return jsonify(d)
 
 
 @app.post('/api/fabrics')
@@ -938,7 +983,7 @@ def _preview_once(job, data):
     for b in blocks:
         if b['colour'] not in colours:
             colours.append(b['colour'])
-    matches = {c: threads.match(c, brand) for c in colours} if brand != 'none' else {}
+    matches = {c: threads.match(c, brand) for c in colours} if threads.matching_on(brand) else {}
     minutes = st['stitches'] / output.SPM + output.CHANGE_MIN * (len(blocks) - 1)
     outline = None
     if single.outline is not None:

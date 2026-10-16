@@ -53,7 +53,7 @@ def finish(single: Result, out_dir, base, formats=('vp3',), copies=1, basting=Fa
     for s in steps:
         if s.colour not in colours:
             colours.append(s.colour)
-    tnames = threads.names(colours, brand) if brand != 'none' else {}
+    tnames = threads.names(colours, brand) if threads.matching_on(brand) else {}
     pattern, blocks = assemble(steps, (), tnames)
     st = render.stats(pattern)
     files = []
@@ -84,10 +84,12 @@ def finish(single: Result, out_dir, base, formats=('vp3',), copies=1, basting=Fa
     minutes = st['stitches'] / SPM + CHANGE_MIN * (len(blocks) - 1) + st['trims'] * 0.08
     hoop_text = (hoop['name'] + ('' if how == 'as is' else ', turned a quarter turn on the machine')) if hoop else \
         'too big for your hoops'
-    matches = {c: threads.match(c, brand) for c in colours} if brand != 'none' else {}
+    matches = {c: threads.match(c, brand) for c in colours} if threads.matching_on(brand) else {}
     info = dict(title=title or base, size_text=size_text, w_mm=st['width_mm'], h_mm=st['height_mm'],
                 stitches=st['stitches'], minutes=minutes, hoop=hoop_text, copies=placed, blocks=blocks,
-                brand=threads.BRANDS.get(brand, ('',))[0], matches=matches, notes=notes, report=rep,
+                brand=('Your thread stash' + (', then ' + threads.BRANDS.get(brand, ('',))[0] if brand != 'none' else '')
+                       if threads.stash_active() else threads.BRANDS.get(brand, ('',))[0]),
+                matches=matches, shopping=threads.shopping(colours, brand) if threads.matching_on(brand) else [], notes=notes, report=rep,
                 trims=st['trims'], supplies=supplies or [])
     sheet = out_dir / f'{base}_thread_sheet.html'
     sheet.write_text(thread_sheet(info, png.name))
@@ -133,18 +135,33 @@ def thread_sheet(info, preview_name):
     rows = []
     for n, b in enumerate(info['blocks'], 1):
         m = info['matches'].get(b['colour'])
-        thread = ('%s %s' % (m['number'], e(m['name']))) if m else ''
+        thread = ''
+        if m:
+            thread = '<span class="sw" style="background:%s"></span>%s %s' % (m['hex'], e(m['number']), e(m['name']))
+            if m.get('in_stash'):
+                thread += '<div class="tb">%s · %s</div>' % (e(m['brand']), 'in your stash, running low' if m.get('low') else 'in your stash')
+                if m.get('buy'):
+                    by = m['buy']
+                    thread += ('<div class="buy">Not a close match. Closer: <span class="sw" style="background:%s"></span>%s %s %s</div>'
+                               % (by['hex'], e(by['brand']), e(by['number']), e(by['name'])))
+                elif m.get('far'):
+                    thread += '<div class="buy">Not a close match: check it against the design.</div>'
         stop = ''
         if n > 1 and info['blocks'][n - 2]['colour'] == b['colour']:
             stop = 'Machine stops first (same thread)'
         what = e(b['name']) if b['name'] and not b['name'].startswith('#') else ''
         rows.append('<tr><td>%d</td><td><span class="sw" style="background:%s"></span>%s</td>'
                     '<td>%s</td><td>%s</td><td>%s</td><td class="n">%s</td><td>%s</td></tr>'
-                    % (n, b['colour'], b['colour'], (('<span class="sw" style="background:%s"></span>' % m['hex']) + thread) if m else '<i>—</i>',
+                    % (n, b['colour'], b['colour'], thread if m else '<i>—</i>',
                        e(', '.join(b['steps'])), what, '{:,}'.format(b['stitches']), stop))
     mins = info['minutes']
     t = '%d min' % round(mins) if mins < 60 else '%d h %02d min' % (mins // 60, round(mins % 60))
     notes = ''.join('<li>%s</li>' % e(n) for n in info['notes'])
+    shop = ''
+    if info.get('shopping'):
+        shop = '<h3>Shopping list</h3><ul class="shop">' + ''.join(
+            '<li><span class="sw" style="background:%s"></span><b>%s %s</b> %s <span class="tb">(%s)</span></li>'
+            % (t['hex'], e(t['brand']), e(t['number']), e(t['name']), e(t['why'])) for t in info['shopping']) + '</ul>'
     return """<!doctype html><html><head><meta charset="utf-8"><title>%(title)s thread sheet</title>
 <style>
 body{font:14px -apple-system,Helvetica,Arial,sans-serif;color:#222;margin:28px;max-width:900px}
@@ -154,7 +171,9 @@ dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0} dt{color:#
 table{border-collapse:collapse;width:100%%;margin-top:18px} th,td{border-bottom:1px solid #e3e3e3;padding:6px 8px;text-align:left;vertical-align:top}
 th{font-size:12px;color:#666;text-transform:uppercase;letter-spacing:.04em} td.n{text-align:right}
 .sw{display:inline-block;width:16px;height:16px;border-radius:3px;border:1px solid #0003;vertical-align:-3px;margin-right:6px}
-ul{padding-left:18px} dl.sup{grid-template-columns:120px 1fr} dl.sup dd{font-weight:400} .foot{color:#888;font-size:12px;margin-top:20px}
+ul{padding-left:18px} ul.shop{list-style:none;padding:0} ul.shop li{margin:4px 0}
+.tb{color:#777;font-size:12px} .buy{color:#a3324f;font-size:12px;margin-top:2px}
+dl.sup{grid-template-columns:120px 1fr} dl.sup dd{font-weight:400} .foot{color:#888;font-size:12px;margin-top:20px}
 @media print{body{margin:10mm}}
 </style></head><body>
 <h1>%(title)s</h1><div class="sub">StitchKit thread sheet, %(date)s</div>
@@ -163,9 +182,9 @@ ul{padding-left:18px} dl.sup{grid-template-columns:120px 1fr} dl.sup dd{font-wei
 <dt>Stitches</dt><dd>%(stitches)s</dd><dt>Thread blocks</dt><dd>%(nblocks)d</dd><dt>Trims</dt><dd>%(trims)d</dd>
 <dt>Sewing time</dt><dd>about %(time)s</dd><dt>Density</dt><dd>%(dens)s per covered sq in</dd>
 <dt>Threads</dt><dd>%(brand)s</dd></dl></div>
-<table><tr><th>#</th><th>Design colour</th><th>Closest thread</th><th>Sews</th><th>Machine shows</th><th>Stitches</th><th>Stop</th></tr>
+<table><tr><th>#</th><th>Design colour</th><th>Thread to use</th><th>Sews</th><th>Machine shows</th><th>Stitches</th><th>Stop</th></tr>
 %(rows)s</table>
-%(supplies)s<h3>Notes</h3><ul>%(notes)s</ul>
+%(shop)s%(supplies)s<h3>Notes</h3><ul>%(notes)s</ul>
 <div class="foot">Time is an estimate at about %(spm)d stitches a minute plus a minute for each thread change or stop.
 Closest thread is matched by screen colour: check it against your real thread.</div>
 </body></html>""" % dict(title=e(info['title']), date=datetime.date.today().strftime('%B %d, %Y'), png=e(preview_name),
@@ -174,7 +193,7 @@ Closest thread is matched by screen colour: check it against your real thread.</
                          hoop=e(info['hoop']), copies=info['copies'], stitches='{:,}'.format(info['stitches']),
                          nblocks=len(info['blocks']), trims=info['trims'], time=t,
                          dens='{:,}'.format(info['report']['per_sq_in']), brand=e(info['brand'] or 'not matched'),
-                         rows='\n'.join(rows), notes=notes, spm=SPM,
+                         rows='\n'.join(rows), notes=notes, spm=SPM, shop=shop,
                          supplies=('<h3>You will need</h3><dl class="sup">' + ''.join(
                              '<dt>%s</dt><dd>%s</dd>' % (e(a), e(b)) for a, b in info['supplies']) + '</dl>')
                          if info.get('supplies') else '')
